@@ -1,5 +1,7 @@
-module hex7seg(input logic  [3:0] a,
-	       output logic [6:0] y);
+module hex7seg (
+    input logic  [3:0] a,
+    output logic [6:0] y
+);
     always_comb
         case (a)
             4'h0: y = 7'b100_0000;

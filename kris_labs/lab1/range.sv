@@ -1,31 +1,34 @@
-module range
-   #(parameter
-     RAM_WORDS = 16,            // Number of counts to store in RAM
-     RAM_ADDR_BITS = 4)         // Number of RAM address bits
-   (input logic         clk,    // Clock
-    input logic 	go,     // Read start and start testing
-    input logic [31:0] 	start,  // Number to start from or count to read
-    output logic 	done,   // True once memory is filled
-    output logic [15:0] count); // Iteration count once finished
+module range #(
+    parameter RAM_WORDS = 16,   // Number of counts to store in RAM
+    parameter RAM_ADDR_BITS = 4 // Number of RAM address bits
+) (
+    input logic         clk,    // Clock
+    input logic         go,     // Read start and start testing
+    input logic [31:0]  start,  // Number to start from or count to read
+    output logic        done,   // True once memory is filled
+    output logic [15:0] count   // Iteration count once finished
+);
 
-   logic 		cgo;    // "go" for the Collatz iterator
-   logic                cdone;  // "done" from the Collatz iterator
-   logic [31:0] 	n;      // number to start the Collatz iterator
+    logic 		        cgo;    // "go" for the Collatz iterator
+    logic               cdone;  // "done" from the Collatz iterator
+    logic [31:0]        n;      // number to start the Collatz iterator
 
-// verilator lint_off PINCONNECTEMPTY
+    // verilator lint_off PINCONNECTEMPTY
    
-   // Instantiate the Collatz iterator
-   collatz c1(.clk(clk),
-	      .go(cgo),
-	      .n(n),
-	      .done(cdone),
-          .dout()); // We don't care about current iteration value
+    // Instantiate the Collatz iterator
+    collatz c1(
+        .clk(clk),
+	    .go(cgo),
+	    .n(n),
+	    .done(cdone),
+        .dout()         // We don't care about current iteration value
+    );
 
-    logic [RAM_ADDR_BITS - 1:0] 	 num;         // The RAM address to write
-    logic 			 running = 0; // True during the iterations
+    logic [RAM_ADDR_BITS - 1:0]     num;         // The RAM address to write
+    logic 			                running = 0; // True during the iterations
 
-   /* Replace this comment and the code below with your solution,
-      which should generate running, done, cgo, n, num, we, and din */
+    /* Replace this comment and the code below with your solution,
+        which should generate running, done, cgo, n, num, we, and din */
 
     always_ff @(posedge clk) begin
         if (go && !running) begin
@@ -41,28 +44,34 @@ module range
                 if (num == 15) begin
                     running <= 0;
                     done <= 1;
-                end else begin
+                end
+                else begin
                     din <= 1;
                     n <= n + 1;
                     cgo <= 1;
                     num <= num + 1;
                 end
-            end else if (cdone && !cgo)
+            end
+            else if (cdone && !cgo) begin
                 we <= 1;
-            else if (!cgo)
+            end
+            else if (!cgo) begin
                 din <= din + 1;
+            end
         end
-        if (cgo)
+        if (cgo) begin
             cgo <= 0;
-        if (done)
+        end
+        if (done) begin
             done <= 0;
+        end
     end
 
     /* Replace this comment and the code above with your solution */
 
-    logic 			 we;                    // Write din to addr
-    logic [15:0] 		 din;                   // Data to write
-    logic [15:0] 		 mem[RAM_WORDS - 1:0];  // The RAM itself
+    logic 			                 we;                    // Write din to addr
+    logic [15:0] 		             din;                   // Data to write
+    logic [15:0]             		 mem[RAM_WORDS - 1:0];  // The RAM itself
     logic [RAM_ADDR_BITS - 1:0] 	 addr;                  // Address to read/write
 
     assign addr = we ? num : start[RAM_ADDR_BITS-1:0];
@@ -73,4 +82,3 @@ module range
     end
 
 endmodule
-	     
