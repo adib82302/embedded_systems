@@ -12,7 +12,7 @@ module lab1(
     logic [31:0] n;
     logic [9:0] offset = 0;  // Offset controlled by buttons
     logic [21:0] counter;    // Counter for button press timing (for 5 Hz rate)
-    logic inc, dec;          // Button press signals
+    logic inc          // Button press signals
 
     // State Encoding
     typedef enum logic [1:0] { IDLE, RUNNING, DONE, UPDATE_N } state_t;
@@ -85,29 +85,30 @@ module lab1(
             end
 
             DONE: begin
-                if (key0_debounced || key1_debounced) begin
+                if (key0_debounced || key1_debounced || key2_debounced) begin
                     state <= UPDATE_N; // Enter increment/decrement mode
+                    counter <= 0;
                 end
             end
 
             UPDATE_N: begin
                 // Reset offset with KEY[2]
+                counter <= counter + 1;
                 if (key2_debounced) begin
                     offset <= 0;
                     state <= IDLE;
                 end
-
-                // Increment/Decrement logic with 5 Hz timer
-                counter <= counter + 1;
-                inc <= (key0_debounced && counter == 0);
-                dec <= (key1_debounced && counter == 0);
-
-                if (inc) offset <= offset + 1;
-                if (dec) offset <= offset - 1;
-
-                // Return to IDLE if no buttons pressed
-                if (!key0_debounced && !key1_debounced) begin
+                else if (key1_debounced) begin
+                    if (counter == 0)
+                        offset <= offset + 1;
+                end
+                else if (key0_debounced) begin
+                    if (counter == 0)
+                        offset <= offset - 1;
+                end
+                else begin
                     state <= IDLE;
+                    counter <= 0;
                 end
             end
 
