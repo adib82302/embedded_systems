@@ -11,8 +11,12 @@ module lab1(
     logic [15:0] count;
     logic [31:0] n;
     logic [9:0] offset = 0;  // Offset controlled by buttons
-    logic [21:0] counter;    // Counter for button press timing
+    logic [21:0] counter;    // Counter for button press timing (for 5 Hz rate)
     logic inc, dec;          // Button press signals
+
+    // State Encoding
+    typedef enum logic [1:0] { IDLE, RUNNING, DONE, UPDATE_N } state_t;
+    state_t state;
 
     assign clk = CLOCK_50;
 
@@ -24,14 +28,14 @@ module lab1(
     // Debounce logic for all keys
     always_ff @(posedge clk) begin
         for (int i = 0; i < 4; i++) begin
-            key_last[i] <= !KEY[i];  // Read button state
+            key_last[i] <= !KEY[i];  // Read button state (active-low)
             if (key_last[i] != key_stable[i]) begin
-                debounce_counter[i] <= 0;
+                debounce_counter[i] <= 0;  // Reset debounce counter
             end else if (debounce_counter[i] < 20'hFFFFF) begin
-                debounce_counter[i] <= debounce_counter[i] + 1;
+                debounce_counter[i] <= debounce_counter[i] + 1;  // Increment debounce counter
             end
             if (debounce_counter[i] == 20'hFFFFF) begin
-                key_stable[i] <= key_last[i];
+                key_stable[i] <= key_last[i];  // Register stable press
             end
         end
     end
@@ -60,30 +64,54 @@ module lab1(
     hex7seg h0(.a(count[3:0]),  .y(HEX0)); // Lower 4 bits of `count`
 
     // Assign start value from switches + offset
-    assign start = {22'b0, SW} + offset;
-    assign n = start; 
-    assign LEDR = SW; // Show switch values on LEDs
+    assign start = {22'b0, SW};  // Use all 10 switches for `n`
+    assign n = start + offset;   // Apply offset for increment/decrement behavior
+    assign LEDR = SW;            // Show switch values on LEDs
 
     always_ff @(posedge clk) begin
-        // If key[3] is pressed, start computation for 256 numbers
-        if (key3_debounced) begin
-            go <= 1;
-        end else begin
-            go <= 0;
-        end
+        case (state)
+            IDLE: begin
+                go <= 0;
+                if (key3_debounced) begin
+                    state <= RUNNING; // Start computation
+                    go <= 1;
+                end
+            end
 
-        // Reset offset when key[2] is pressed
-        if (key2_debounced) begin
-            offset <= 0;
-        end
+            RUNNING: begin
+                if (done) begin
+                    state <= DONE; // Wait for completion
+                end
+            end
 
-        // Increment/Decrement logic using a counter for 5 Hz button hold
-        counter <= counter + 1;
-        inc <= (key0_debounced && counter == 0); // Only trigger when counter wraps
-        dec <= (key1_debounced && counter == 0);
+            DONE: begin
+                if (key0_debounced || key1_debounced) begin
+                    state <= UPDATE_N; // Enter increment/decrement mode
+                end
+            end
 
-        if (inc) offset <= offset + 1;
-        if (dec) offset <= offset - 1;
+            UPDATE_N: begin
+                // Reset offset with KEY[2]
+                if (key2_debounced) begin
+                    offset <= 0;
+                    state <= IDLE;
+                end
+
+                // Increment/Decrement logic with 5 Hz timer
+                counter <= counter + 1;
+                inc <= (key0_debounced && counter == 0);
+                dec <= (key1_debounced && counter == 0);
+
+                if (inc) offset <= offset + 1;
+                if (dec) offset <= offset - 1;
+
+                // Return to IDLE if no buttons pressed
+                if (!key0_debounced && !key1_debounced) begin
+                    state <= IDLE;
+                end
+            end
+
+        endcase
     end
 
 endmodule
