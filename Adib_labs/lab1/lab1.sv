@@ -2,7 +2,7 @@ module lab1(
     input logic        CLOCK_50,  // 50 MHz Clock input
     input logic [3:0]  KEY,       // Pushbuttons
     input logic [9:0]  SW,        // Switches
-    output logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, // 7-segment display
+    output logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, // 7-segment displays
     output logic [9:0] LEDR       // LEDs for debugging
 );
 
@@ -15,7 +15,32 @@ module lab1(
     logic inc, dec;          // Button press signals
 
     assign clk = CLOCK_50;
-    
+
+    // Debounced button signals
+    logic key3_debounced, key2_debounced, key1_debounced, key0_debounced;
+    logic [19:0] debounce_counter [3:0];
+    logic key_last [3:0], key_stable [3:0];
+
+    // Debounce logic for all keys
+    always_ff @(posedge clk) begin
+        for (int i = 0; i < 4; i++) begin
+            key_last[i] <= !KEY[i];  // Read button state
+            if (key_last[i] != key_stable[i]) begin
+                debounce_counter[i] <= 0;
+            end else if (debounce_counter[i] < 20'hFFFFF) begin
+                debounce_counter[i] <= debounce_counter[i] + 1;
+            end
+            if (debounce_counter[i] == 20'hFFFFF) begin
+                key_stable[i] <= key_last[i];
+            end
+        end
+    end
+
+    assign key3_debounced = key_stable[3];
+    assign key2_debounced = key_stable[2];
+    assign key1_debounced = key_stable[1];
+    assign key0_debounced = key_stable[0];
+
     // Instantiate range module (256 numbers, 8-bit address)
     range #(256, 8) r1 (
         .clk(clk),
@@ -41,21 +66,21 @@ module lab1(
 
     always_ff @(posedge clk) begin
         // If key[3] is pressed, start computation for 256 numbers
-        if (!KEY[3]) begin
+        if (key3_debounced) begin
             go <= 1;
         end else begin
             go <= 0;
         end
 
         // Reset offset when key[2] is pressed
-        if (!KEY[2]) begin
+        if (key2_debounced) begin
             offset <= 0;
         end
 
         // Increment/Decrement logic using a counter for 5 Hz button hold
         counter <= counter + 1;
-        inc <= (!KEY[0] && counter == 0); // Only trigger when counter wraps
-        dec <= (!KEY[1] && counter == 0);
+        inc <= (key0_debounced && counter == 0); // Only trigger when counter wraps
+        dec <= (key1_debounced && counter == 0);
 
         if (inc) offset <= offset + 1;
         if (dec) offset <= offset - 1;
