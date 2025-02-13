@@ -5,59 +5,122 @@
 // By: Kristian Nikolov
 // Uni: kdn2117
 
-module lab1(
-    // 50 MHz Clock input
-    input logic         CLOCK_50,
-    // Pushbuttons; KEY[0] is rightmost
-	input logic [3:0]   KEY,
-    // Switches; SW[0] is rightmost
-	input logic [9:0]   SW,
-	// 7-segment LED displays; HEX0 is rightmost
-	output logic [6:0]  HEX0, HEX1, HEX2, HEX3, HEX4, HEX5,
-    // LEDs above the switches; LED[0] on right
-	output logic [9:0]  LEDR
+module lab1( 
+    input logic        CLOCK_50,  // 50 MHz Clock input
+    input logic [3:0]  KEY,       // Pushbuttons
+    input logic [9:0]  SW,        // Switches
+    output logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, // 7-segment displays
+    output logic [9:0] LEDR       // LEDs for debugging
 );
 
-    logic 			clk, go, done;   
-    logic [31:0]    start;
-    logic [15:0] 	count;
+    logic clk, go, done;
+    logic [31:0] start;
+    logic [15:0] count;
+    logic [31:0] n;
+    logic [11:0] offset = 0;  // Offset controlled by buttons
+    logic [21:0] counter;    // Counter for button press timing (for 5 Hz rate)
 
-    logic [11:0] 	n;
+    // State Encoding
+    typedef enum logic [1:0] { IDLE, RUNNING, UPDATE_N } state_t;
+    state_t state;
 
     assign clk = CLOCK_50;
 
-    range #(256, 8) // RAM_WORDS = 256, RAM_ADDR_BITS = 8)
-        r ( .* ); // Connect everything with matching names
+    // Debounced button signals
+    logic key3_debounced, key2_debounced, key1_debounced, key0_debounced;
+    logic [19:0] debounce_counter [3:0];
+    logic key_last [3:0], key_stable [3:0];
 
-    // Replace this comment and the code below it with your own code;
-    // The code below is merely to suppress Verilator lint warnings
-    
-    assign HEX0 = {KEY[2:0], KEY[3:0]};
-    assign HEX1 = SW[6:0];
-    assign HEX2 = {(n == 12'b0), (count == 16'b0) ^ KEY[1],
-		  go, done ^ KEY[0], SW[9:7]};
-    assign HEX3 = HEX0;
-    assign HEX4 = HEX1;
-    assign HEX5 = HEX2;
-    assign LEDR = SW;
-    // assign go = KEY[0];
-    assign start = {SW[1:0], SW, SW, SW};
-    assign n = {SW[1:0], SW};
-
+    // Debounce logic for all keys
     always_ff @(posedge clk) begin
-        if (KEY[0]) begin
-            // Increment value of n being displayed
-        end
-        else if (KEY[1]) begin
-            // Decrement value of n being displayed
-        end
-        else if (KEY[2]) begin
-            // Reset the difference between n displayed and val on switches
-        end
-        else if (KEY[3]) begin
-            // Send go signal to run range
-            go <= 1;
+        for (int i = 0; i < 4; i++) begin
+            key_last[i] <= !KEY[i];  // Read button state (active-low)
+            if (key_last[i] != key_stable[i]) begin
+                debounce_counter[i] <= 0;  // Reset debounce counter
+            end else if (debounce_counter[i] < 20'hFFFFF) begin
+                debounce_counter[i] <= debounce_counter[i] + 1;  // Increment debounce counter
+            end
+            if (debounce_counter[i] == 20'hFFFFF) begin
+                key_stable[i] <= key_last[i];  // Register stable press
+            end
         end
     end
-   
+
+    assign key3_debounced = key_stable[3];
+    assign key2_debounced = key_stable[2];
+    assign key1_debounced = key_stable[1];
+    assign key0_debounced = key_stable[0];
+
+    // Instantiate range module (256 numbers, 8-bit address)
+    range #(256, 8) r1 (
+        .clk(clk),
+        .go(go),
+        .start(start),
+        .done(done),
+        .count(count)
+    );
+
+    // Instantiate hex7seg modules for display
+    hex7seg h5(.a(n[11:8]), .y(HEX5));  // Higher 4 bits of `n`
+    hex7seg h4(.a(n[7:4]),  .y(HEX4));
+    hex7seg h3(.a(n[3:0]),  .y(HEX3));  // Lower 4 bits of `n`
+    
+    hex7seg h2(.a(count[11:8]), .y(HEX2)); // Higher 4 bits of `count`
+    hex7seg h1(.a(count[7:4]),  .y(HEX1));
+    hex7seg h0(.a(count[3:0]),  .y(HEX0)); // Lower 4 bits of `count`
+
+    // Assign start value from switches + offset
+    assign LEDR = SW;            // Show switch values on LEDs
+
+    always_ff @(posedge clk) begin
+        n <= start + offset;   // Apply offset for increment/decrement behavior
+        case (state)
+            IDLE: begin
+                go <= 0;
+                if (key3_debounced) begin
+                    // Start running range
+                    state <= RUNNING;
+                    go <= 1;
+                    // Set start value to the switches
+                    start <= {22'b0, SW};
+                end
+                else if (key2_debounced) begin
+                    // Reset offset with KEY[2]
+                    start <= SW - offset;
+                    state <= IDLE;
+                end
+                else if (key0_debounced || key1_debounced) begin
+                    state <= UPDATE_N; // Enter increment/decrement mode
+                    counter <= 0;
+                end
+            end
+
+            RUNNING: begin
+                go <= 0;
+                if (done) begin
+                    offset <= start;
+                    start <= 0;
+                    state <= IDLE; // Wait for completion
+                end
+            end
+
+            UPDATE_N: begin
+                counter <= counter + 1;
+                if (key1_debounced) begin
+                    if (counter == 0)
+                        start <= start + 1;
+                end
+                else if (key0_debounced) begin
+                    if (counter == 0)
+                        start <= start - 1;
+                end
+                else begin
+                    state <= IDLE;
+                    counter <= 0;
+                end
+            end
+
+        endcase
+    end
+
 endmodule

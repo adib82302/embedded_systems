@@ -41,7 +41,7 @@ module range #(
         if (running) begin
             if (we) begin
                 we <= 0;
-                if (num == 15) begin
+                if (num == (RAM_WORDS - 1)) begin
                     running <= 0;
                     done <= 1;
                 end
