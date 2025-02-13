@@ -16,12 +16,17 @@ module lab1(
     logic clk, go, done;
     logic [31:0] start;
     logic [15:0] count;
+    // Output display for HEX 2, 1, 0
+    logic [15:0] out_disp;
     logic [31:0] n;
     logic [11:0] offset = 0;  // Offset controlled by buttons
     logic [21:0] counter;    // Counter for button press timing (for 5 Hz rate)
+    logic [25:0] counter_blink; // Counter for end blink
+
+    localparam RANGE_LEN = 256;
 
     // State Encoding
-    typedef enum logic [1:0] { IDLE, RUNNING, UPDATE_N } state_t;
+    typedef enum logic [1:0] { IDLE, RUNNING, DONE, UPDATE_N } state_t;
     state_t state;
 
     assign clk = CLOCK_50;
@@ -52,7 +57,7 @@ module lab1(
     assign key0_debounced = key_stable[0];
 
     // Instantiate range module (256 numbers, 8-bit address)
-    range #(256, 8) r1 (
+    range #(RANGE_LEN, 8) r1 (
         .clk(clk),
         .go(go),
         .start(start),
@@ -64,16 +69,23 @@ module lab1(
     hex7seg h5(.a(n[11:8]), .y(HEX5));  // Higher 4 bits of `n`
     hex7seg h4(.a(n[7:4]),  .y(HEX4));
     hex7seg h3(.a(n[3:0]),  .y(HEX3));  // Lower 4 bits of `n`
-    
-    hex7seg h2(.a(count[11:8]), .y(HEX2)); // Higher 4 bits of `count`
-    hex7seg h1(.a(count[7:4]),  .y(HEX1));
-    hex7seg h0(.a(count[3:0]),  .y(HEX0)); // Lower 4 bits of `count`
+   
+    hex7seg h2(.a(out_disp[11:8]), .y(HEX2)); // Higher 4 bits of `count`
+    hex7seg h1(.a(out_disp[7:4]),  .y(HEX1));
+    hex7seg h0(.a(out_disp[3:0]),  .y(HEX0)); // Lower 4 bits of `count`
 
     // Assign start value from switches + offset
-    assign LEDR = SW;            // Show switch values on LEDs
 
     always_ff @(posedge clk) begin
-        n <= start + offset;   // Apply offset for increment/decrement behavior
+        // Apply offset for increment/decrement behavior
+        n <= start + offset;
+        LEDR <= SW;            // Show switch values on LEDs
+        if ((n < offset) || (n > (offset + RANGE_LEN))) begin
+            out_disp <= 0;
+        end
+        else begin
+            out_disp <= count;
+        end
         case (state)
             IDLE: begin
                 go <= 0;
@@ -100,8 +112,22 @@ module lab1(
                 if (done) begin
                     offset <= start;
                     start <= 0;
-                    state <= IDLE; // Wait for completion
+                    state <= DONE; // Wait for completion
+                    counter_blink <= 1;
                 end
+            end
+
+            DONE: begin
+                // Just a blink to confirm completion of range
+                counter_blink <= counter_blink + 1;
+                LEDR <= 0;
+                if (counter_blink == 0) begin
+                    state <= IDLE;
+                    counter_blink <= 1;
+                end
+                else if (counter_blink[23] == 1) begin
+                    LEDR <= -1;
+                end 
             end
 
             UPDATE_N: begin
