@@ -17,10 +17,9 @@ module lab1(
     logic [31:0] start;
     logic [15:0] count;
     // Output display for HEX 2, 1, 0
-    logic [15:0] out_disp;
     logic [31:0] n;
     logic [11:0] offset = 0;  // Offset controlled by buttons
-    logic [21:0] counter;    // Counter for button press timing (for 5 Hz rate)
+    logic [22:0] counter;    // Counter for button press timing (for 5 Hz rate)
     logic [25:0] counter_blink; // Counter for end blink
 
     localparam RANGE_LEN = 256;
@@ -70,9 +69,9 @@ module lab1(
     hex7seg h4(.a(n[7:4]),  .y(HEX4));
     hex7seg h3(.a(n[3:0]),  .y(HEX3));  // Lower 4 bits of `n`
    
-    hex7seg h2(.a(out_disp[11:8]), .y(HEX2)); // Higher 4 bits of `count`
-    hex7seg h1(.a(out_disp[7:4]),  .y(HEX1));
-    hex7seg h0(.a(out_disp[3:0]),  .y(HEX0)); // Lower 4 bits of `count`
+    hex7seg h2(.a(count[11:8]), .y(HEX2)); // Higher 4 bits of `count`
+    hex7seg h1(.a(count[7:4]),  .y(HEX1));
+    hex7seg h0(.a(count[3:0]),  .y(HEX0)); // Lower 4 bits of `count`
 
     // Assign start value from switches + offset
 
@@ -80,26 +79,22 @@ module lab1(
         // Apply offset for increment/decrement behavior
         n <= start + offset;
         LEDR <= SW;            // Show switch values on LEDs
-        if ((n < offset) || (n > (offset + RANGE_LEN))) begin
-            out_disp <= 0;
-        end
-        else begin
-            out_disp <= count;
-        end
         case (state)
             IDLE: begin
                 go <= 0;
                 if (key3_debounced) begin
-                    // Start running range
-                    state <= RUNNING;
-                    go <= 1;
-                    // Set start value to the switches
-                    start <= {22'b0, SW};
+                    if (SW != 0) begin
+                        // Start running range
+                        state <= RUNNING;
+                        go <= 1;
+                        // Set start value to the switches
+                        start <= {22'b0, SW};
+                    end
                 end
                 else if (key2_debounced) begin
                     // Reset offset with KEY[2]
-                    start <= SW - offset;
-                    state <= IDLE;
+                    if (SW >= offset && SW < RANGE_LEN)
+                        start <= SW - offset;
                 end
                 else if (key0_debounced || key1_debounced) begin
                     state <= UPDATE_N; // Enter increment/decrement mode
@@ -133,12 +128,12 @@ module lab1(
             UPDATE_N: begin
                 counter <= counter + 1;
                 if (key1_debounced) begin
-                    if (counter == 0)
+                    if (counter == 0 && start != RANGE_LEN)
                         start <= start + 1;
                 end
                 else if (key0_debounced) begin
-                    if (counter == 0)
-                        start <= start - 1;
+                    if (counter == 0 && start != 0)
+                            start <= start - 1;
                 end
                 else begin
                     state <= IDLE;
