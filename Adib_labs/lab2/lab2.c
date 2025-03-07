@@ -269,6 +269,57 @@ void handle_keypress(const char *keystate, char ascii_char) {
         update_input_display();
     }
 }
+// void handle_keypress(const char *keystate, char ascii_char) {
+//     uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
+
+//     if (ascii_char == KEY_ENTER) { // Enter key
+//         char message_to_send[BUFFER_SIZE] = {0};
+//         int msg_length = 0;
+
+//         for (int i = 0; i < keypress_count; i++) {
+//             message_to_send[msg_length++] = keypress_buffer[i][0];
+//         }
+
+//         if (msg_length > 0) {
+//             message_to_send[msg_length++] = '\n';
+//             send(sockfd, message_to_send, msg_length, 0);
+//         }
+
+//         memset(keypress_buffer, 0, sizeof(keypress_buffer));
+//         keypress_count = 0;
+//         cursor_position = 1;
+//         cursor_clear();
+//         fbputs(">", OUT, 0);
+//         fbputchar('|', OUT, cursor_position);
+//     } 
+//     else if (ascii_char == KEY_BACKSPACE) { // Backspace
+//         if (keypress_count > 0) {
+//             keypress_count--;
+//             keypress_buffer[keypress_count][0] = ' ';
+//             cursor_position--;
+//             update_input_display();
+//         }
+//     } 
+//     else if (keycode == KEY_LEFT_ARROW) { // Left Arrow
+//         if (cursor_position > 1) { 
+//             cursor_position--;
+//             update_input_display();
+//         }
+//     } 
+//     else if (keycode == KEY_RIGHT_ARROW) { // Right Arrow
+//         if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
+//             cursor_position++;
+//             update_input_display();
+//         }
+//     } 
+//     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
+//         keypress_buffer[keypress_count][0] = ascii_char;
+//         keypress_buffer[keypress_count][1] = '\0';
+//         keypress_count++;
+//         cursor_position++;
+//         update_input_display();
+//     }
+// }
 
 // void handle_keypress(const char *keystate, char ascii_char) {
 

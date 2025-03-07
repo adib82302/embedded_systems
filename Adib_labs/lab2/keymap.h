@@ -30,7 +30,6 @@ const char keycode_to_ascii[256] = {
     [0x34] = '\'', [0x35] = '`', [0x36] = ',', [0x37] = '.',
     [0x38] = '/',
     [0x50] = KEY_LEFT_ARROW, [0x4F] = KEY_RIGHT_ARROW,
-    [0x51] = KEY_DOWN_ARROW, [0x52] = KEY_UP_ARROW
 };
 
 // Shifted keycode to ASCII mapping
