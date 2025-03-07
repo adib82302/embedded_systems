@@ -184,7 +184,8 @@ void update_input_display() {
 
     // Draw characters before the cursor
     for (int i = 0; i < keypress_count; i++) {
-        if (i == cursor_position - 1) {
+        fbputchar(keypress_buffer[i][0], row, col++);
+        if (i == cursor_position - 2) {
             fbputchar('|', row, col++); // Draw the cursor at the correct position
             if (col >= WIDTH) { // Handle line wrapping
                 col = 0;
@@ -192,7 +193,6 @@ void update_input_display() {
                 if (row > 22) break;
             }
         }
-        fbputchar(keypress_buffer[i][0], row, col++);
         if (col >= WIDTH) { // Handle line wrapping
             col = 0;
             row++;
