@@ -151,6 +151,7 @@ void update_input_display() {
     // Clear the entire input area (bottom part of the screen)
 
     cursor_clear();
+    fbputs(">", OUT, 0);
 
     // Display the input buffer with line wrapping
     int row = 16; // Start from the first row of the input area
@@ -161,19 +162,14 @@ void update_input_display() {
         if (col >= WIDTH) { // When reaching the end of the line, wrap to the next row
             col = 0;
             row++;
-            if (row >= 23) row = 16; // Loop back to the start of input area if overflow
         }
+        if (row > 22) {
+            keypress_count = 0;
+            cursor_position = 1;
+            fbputs(">", 20, 0);
+        }   
     }
-
-    // Draw a static cursor as a vertical line '|'
     fbputchar('|', row, col);
-
-    // Check for overflow and reset if necessary
-    if (row > 22) {
-        keypress_count = 0;
-        cursor_position = 1;
-        fbputs(">", 20, 0);
-    }
 }
 /*
 void update_input_display() {
