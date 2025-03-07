@@ -39,7 +39,7 @@ void *network_thread_f(void *);
 
 // Function prototypes
 void setup_screen();
-void handle_keypress(char key);
+void handle_keypress(char key, const char *keystate);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
@@ -94,15 +94,14 @@ int main() {
                                   (unsigned char *)&packet, sizeof(packet),
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
-            // Show keycodes in terminal (for debugging)
+            // Prepare the keycode string
             sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0], packet.keycode[1]);
+            
+            // Display in the terminal for debugging
             printf("%s\n", keystate);
-
-            // Display keycodes on the VGA display
-            fbputs(keystate, OUT, 1);
-
-            // Handle the actual keypress for the input display
-            handle_keypress(packet.keycode[0]);
+            
+            // Handle the keypress for the input display and show the keycode on the VGA screen
+            handle_keypress(packet.keycode[0], keystate);
 
             if (packet.keycode[0] == 0x29) { /* ESC pressed? */
                 break;
@@ -158,8 +157,8 @@ void update_input_display() {
     fbputchar('|', OUT, cursor_position + 1);
 }
 
-/* Handle keypresses and update the input buffer */
-void handle_keypress(char key) {
+/* Handle keypresses, show keycode, and update the input buffer */
+void handle_keypress(char key, const char *keystate) {
     if (key == '\n' || key == 0x28) { // Enter key
         display_message(input_buffer);
         memset(input_buffer, 0, BUFFER_SIZE);
@@ -173,6 +172,18 @@ void handle_keypress(char key) {
         // Only accept printable ASCII characters
         input_buffer[cursor_position++] = key;
     }
+
+    // Display keycode at the current cursor position
+    fbputs(keystate, OUT, cursor_position + 1);
+    
+    // Move the cursor to the next position
+    cursor_position += strlen(keystate) + 1;
+
+    // Ensure the cursor doesn't go beyond screen width
+    if (cursor_position >= WIDTH - 1) {
+        cursor_position = WIDTH - 2;
+    }
+
     update_input_display();
 }
 
