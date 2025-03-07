@@ -28,8 +28,7 @@ const char keycode_to_ascii[256] = {
     [0x2C] = ' ', [0x2D] = '-', [0x2E] = '=',
     [0x2F] = '[', [0x30] = ']', [0x31] = '\\', [0x33] = ';',
     [0x34] = '\'', [0x35] = '`', [0x36] = ',', [0x37] = '.',
-    [0x38] = '/',
-    [0x50] = KEY_LEFT_ARROW, [0x4F] = KEY_RIGHT_ARROW,
+    [0x38] = '/'
 };
 
 // Shifted keycode to ASCII mapping
@@ -56,6 +55,13 @@ char keycode_to_char(uint8_t modifiers, uint8_t keycode) {
     if (modifiers & USB_LCTRL) printf("[CTRL] ");
     if (modifiers & USB_LALT) printf("[ALT] ");
 
+    // Return special keycodes directly
+    if (keycode == KEY_LEFT_ARROW || keycode == KEY_RIGHT_ARROW ||
+        keycode == KEY_UP_ARROW || keycode == KEY_DOWN_ARROW) {
+        return keycode;
+    }
+
+    // Otherwise, convert to ASCII
     if (shift) {
         return keycode_to_ascii_shift[keycode];
     } else {
@@ -64,6 +70,7 @@ char keycode_to_char(uint8_t modifiers, uint8_t keycode) {
 }
 
 #endif
+
 
 
 // #ifndef _KEYMAP_H

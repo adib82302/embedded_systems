@@ -220,7 +220,7 @@ void update_input_display() {
 /* Handle keypresses, store in buffer, and update display */
 void handle_keypress(const char *keystate, char ascii_char) {
     uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
-
+    
     if (ascii_char == KEY_ENTER) { // Enter key
         char message_to_send[BUFFER_SIZE] = {0};
         int msg_length = 0;
