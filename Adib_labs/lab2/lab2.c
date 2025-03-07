@@ -304,14 +304,14 @@ void handle_keypress(const char *keystate, char ascii_char) {
     else if (ascii_char == LEFT_ARROW) { // Left Arrow
         if (cursor_position > 1) { 
             cursor_position--;
-            update_input_display();
         }
+        update_input_display();
     } 
     else if (ascii_char == RIGHT_ARROW) { // Right Arrow
         if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
-            update_input_display();
         }
+        update_input_display();
     } 
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
         keypress_buffer[keypress_count][0] = ascii_char;
