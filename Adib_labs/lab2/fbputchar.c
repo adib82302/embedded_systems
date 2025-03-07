@@ -122,7 +122,7 @@ void fbclear()
 }
 
 void cursor_clear(){
-  fbputs(" ", 20,64);
+  fbputs(" ", 22,64);
 }
 
 /* 8 X 16 console font from /lib/kbd/consolefonts/lat0-16.psfu.gz
