@@ -175,6 +175,21 @@ void update_input_display() {
         fbputchar('|', row, col);
     }
     //fbputchar('|', row, col);
+     int count = keypress_count;
+    
+    // Clear, character count
+    for (int col = 50; col < WIDTH; col++) {
+        fbputchar(' ', 14, col);
+    }
+
+    // character count
+    fbputchar((count / 100) % 10 + '0', 14, 57); 
+    fbputchar((count / 10) % 10 + '0', 14, 58);  
+    fbputchar((count % 10) + '0', 14, 59);       
+    fbputchar('/', 14, 60); 
+    fbputchar('4', 14, 61);
+    fbputchar('4', 14, 62);
+    fbputchar('1', 14, 63);
 }
 /*
 void update_input_display() {
