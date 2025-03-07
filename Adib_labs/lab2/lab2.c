@@ -123,6 +123,8 @@ int main() {
             
             // Display in the terminal for debugging
             printf("%s\n", keystate);
+            printf("%d\n", packet.keycode[0]);
+            printf("%d\n", packet.keycode[1]);
 
             // Convert keycode to ASCII
             ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
