@@ -23,7 +23,7 @@
 #define TOP 0
 #define BOTTOM 23
 #define DIVIDE 15
-#define OUT 20
+#define OUT 16
 #define IN 8
 #define WIDTH 63
 
