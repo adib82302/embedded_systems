@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include "usbkeyboard.h"
 #include <pthread.h>
-#include <time.h>
 
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
@@ -30,7 +29,6 @@
 // Input buffer and cursor management
 char input_buffer[BUFFER_SIZE] = {0};
 int cursor_position = 0;
-int cursor_visible = 1; // Toggle for cursor blinking
 
 int sockfd; /* Socket file descriptor */
 struct libusb_device_handle *keyboard;
@@ -45,7 +43,6 @@ void handle_keypress(char key);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
-void toggle_cursor();
 
 int main() {
     int err;
@@ -97,7 +94,7 @@ int main() {
                                   (unsigned char *)&packet, sizeof(packet),
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
-            // Show keycodes in terminal (like the original code)
+            // Show keycodes in terminal (for debugging)
             sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0], packet.keycode[1]);
             printf("%s\n", keystate);
 
@@ -111,10 +108,6 @@ int main() {
                 break;
             }
         }
-
-        // Blink the cursor every 500ms
-        usleep(500000); // 500ms delay for consistent cursor blinking
-        toggle_cursor();
     }
 
     /* Terminate the network thread */
@@ -145,9 +138,10 @@ void setup_screen() {
         fbputchar('*', BOTTOM, col);
     }
     fbputs(">", OUT, 0);
+    update_input_display();
 }
 
-/* Update the input display with the cursor */
+/* Update the input display with a static cursor */
 void update_input_display() {
     // Clear the input line
     for (int col = 1; col < WIDTH; col++) {
@@ -160,10 +154,8 @@ void update_input_display() {
     // Display the input buffer
     fbputs(input_buffer, OUT, 1);
 
-    // Draw the cursor if it is visible
-    if (cursor_visible) {
-        fbputchar('|', OUT, cursor_position + 1);
-    }
+    // Draw a static cursor as a vertical line '|'
+    fbputchar('|', OUT, cursor_position + 1);
 }
 
 /* Handle keypresses and update the input buffer */
@@ -214,10 +206,4 @@ void clear_receive_area() {
             fbputchar(' ', row, col);
         }
     }
-}
-
-/* Toggle cursor visibility for blinking effect */
-void toggle_cursor() {
-    cursor_visible = !cursor_visible;
-    update_input_display();
 }
