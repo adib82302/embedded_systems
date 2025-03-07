@@ -100,7 +100,7 @@ int main() {
             // Display in the terminal for debugging
             printf("%s\n", keystate);
             
-            // Handle the keypress for the input display and show the keycode on the VGA screen
+            // Display the keycode on the VGA screen and handle the cursor
             handle_keypress(keystate);
 
             if (packet.keycode[0] == 0x29) { /* ESC pressed? */
@@ -156,9 +156,14 @@ void update_input_display() {
 
 /* Handle keypresses, show keycode, and update the input buffer */
 void handle_keypress(const char *keystate) {
+    // Clear the input area to avoid overwriting
+    for (int col = 1; col < WIDTH; col++) {
+        fbputchar(' ', OUT, col);
+    }
+
     // Display keycode at the current cursor position
     fbputs(keystate, OUT, cursor_position + 1);
-    
+
     // Move the cursor to the next position
     cursor_position += strlen(keystate) + 1;
 
