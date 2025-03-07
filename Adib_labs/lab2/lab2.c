@@ -19,7 +19,7 @@
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
 
-#define BUFFER_SIZE 441
+#define BUFFER_SIZE 440
 #define TOP 0
 #define BOTTOM 23
 #define DIVIDE 15
@@ -189,7 +189,7 @@ void update_input_display() {
     fbputchar('/', 14, 60); 
     fbputchar('4', 14, 61);
     fbputchar('4', 14, 62);
-    fbputchar('1', 14, 63);
+    fbputchar('0', 14, 63);
 }
 /*
 void update_input_display() {
