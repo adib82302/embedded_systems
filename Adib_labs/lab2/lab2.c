@@ -19,7 +19,7 @@
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
 
-#define BUFFER_SIZE 440
+#define BUFFER_SIZE 441
 #define TOP 0
 #define BOTTOM 23
 #define DIVIDE 15
@@ -239,7 +239,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
         fbputs(">", OUT, 0);
         fbputchar('|', OUT, cursor_position);
     } 
-    else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
+    else if (ascii_char != 0 && keypress_count < BUFFER_SIZE ) {
         // Store the keypress in the buffer
         keypress_buffer[keypress_count][0] = ascii_char;
         keypress_buffer[keypress_count][1] = '\0';
