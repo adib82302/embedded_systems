@@ -297,65 +297,79 @@ void handle_keypress(const char *keystate, char ascii_char) {
         cursor_clear();
         fbputs(">", OUT, 0);
         fbputchar('|', OUT, cursor_position);
+        held_keycode = 0; // Stop any held key action
+        held_ascii = 0;
     } 
     else if (ascii_char == '\b') { // Backspace
         if (keypress_count > 0) {
             keypress_count--;
             keypress_buffer[keypress_count][0] = ' ';
-            cursor_position--;
+            if (cursor_position > 1) cursor_position--;
             update_input_display();
         }
+        held_keycode = 0; // Stop repeat on backspace
     } 
     else if (ascii_char == LEFT_ARROW) { // Left Arrow
         if (cursor_position > 1) { 
             cursor_position--;
-            update_input_display();
         }
+        update_input_display();
+        held_keycode = 0; // Stop repeat on arrow key
     } 
     else if (ascii_char == RIGHT_ARROW) { // Right Arrow
         if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
-            update_input_display();
         }
+        update_input_display();
+        held_keycode = 0; // Stop repeat on arrow key
     } 
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
-        // Handle normal character input
-        keypress_buffer[keypress_count][0] = ascii_char;
-        keypress_buffer[keypress_count][1] = '\0';
+        // Add character to buffer at the current cursor position
+        for (int i = keypress_count; i > cursor_position - 1; i--) {
+            keypress_buffer[i][0] = keypress_buffer[i - 1][0];
+        }
+        keypress_buffer[cursor_position - 1][0] = ascii_char;
+        keypress_buffer[cursor_position][1] = '\0';
         keypress_count++;
         cursor_position++;
         update_input_display();
 
-        // Start key hold detection
-        held_keycode = keycode;
-        held_ascii = ascii_char;
-        clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+        // Only enable repeat if 'r' is pressed
+        if (ascii_char == 'r') {
+            held_keycode = keycode;
+            held_ascii = ascii_char;
+            clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+        } else {
+            held_keycode = 0;
+            held_ascii = 0;
+        }
     }
 
-    // Handle key release (keycode 0 means no key pressed)
+    // Handle key release
     if (keycode == 0) {
         held_keycode = 0;
         held_ascii = 0;
     }
 
-    // Check if a key is being held down for repeat action
-    if (held_keycode != 0 && held_ascii != 0) {
+    // Auto-repeat only for the 'r' key
+    if (held_keycode != 0 && held_ascii == 'r') {
         struct timespec current_time;
         clock_gettime(CLOCK_MONOTONIC, &current_time);
         long elapsed_ms = (current_time.tv_sec - last_repeat_time.tv_sec) * 1000 +
                           (current_time.tv_nsec - last_repeat_time.tv_nsec) / 1000000;
 
-        // Apply initial delay before starting repeat
-        if (elapsed_ms > REPEAT_DELAY) {
-            keypress_buffer[keypress_count][0] = held_ascii;
-            keypress_buffer[keypress_count][1] = '\0';
-            keypress_count++;
-            cursor_position++;
-            update_input_display();
-
-            // Reset the timer for continuous repeat rate
-            usleep(REPEAT_RATE);
-            clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+        if (elapsed_ms > REPEAT_RATE) {
+            if (keypress_count < BUFFER_SIZE - 1) {
+                // Insert 'r' repeatedly while key is held
+                for (int i = keypress_count; i > cursor_position - 1; i--) {
+                    keypress_buffer[i][0] = keypress_buffer[i - 1][0];
+                }
+                keypress_buffer[cursor_position - 1][0] = 'r';
+                keypress_count++;
+                cursor_position++;
+                update_input_display();
+                clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+            }
         }
     }
 }
