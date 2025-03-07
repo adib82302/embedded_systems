@@ -65,9 +65,6 @@ void setup_screen() {
         fbputchar('*', BOTTOM, col);    // Bottom border
     }
     fbputs(">", INPUT_ROW, 0); // Input prompt
-
-    // Test if the screen can render a character at a specific position
-    fbputchar('X', 10, 10); // Should draw 'X' at row 10, column 10
 }
 
 /* Update the input display with the cursor */
