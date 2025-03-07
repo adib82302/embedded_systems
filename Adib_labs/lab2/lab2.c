@@ -146,10 +146,11 @@ void setup_screen() {
 }
 
 /* Update the input display with a static cursor */
+
 void update_input_display() {
     // Clear the entire input area (bottom part of the screen)
     for (int row = 16; row < 23; row++) {
-        for (int col = 0; col < WIDTH; col++) {
+        for (int col = 1; col < WIDTH; col++) {
             fbputchar(' ', row, col);
         }
     }
@@ -177,6 +178,31 @@ void update_input_display() {
         fbputs(">", 20, 0);
     }
 }
+/*
+void update_input_display() {
+    // Clear the input line
+    for (int col = 1; col < WIDTH; col++) {
+        fbputchar(' ', OUT, col);
+    }
+
+    int col = 1;
+    for (int i = 0; i < keypress_count; i++) {
+        fbputchar(keypress_buffer[i][0], OUT, col++);
+    }
+
+    // Draw a static cursor as a vertical line '|'
+    fbputchar('|', OUT, col);
+
+    // Check for overflow and reset if necessary
+    if (col >= WIDTH - 1) {
+        keypress_count = 0;
+        cursor_position = 1;
+        fbputs(">", OUT, 0);
+    }
+}
+*/
+
+
 
 /* Handle keypresses, store in buffer, and update display */
 void handle_keypress(const char *keystate, char ascii_char) {
@@ -206,6 +232,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
         keypress_buffer[keypress_count][1] = '\0';
         keypress_count++;
 
+        // Update the display with new input
         update_input_display();
     }
 }
