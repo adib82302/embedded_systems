@@ -17,6 +17,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#define LEFT_ARROW 0x1B  // Example keycode for left arrow
+#define RIGHT_ARROW 0x1C  // Example keycode for right arrow
+
 #define REPEAT_DELAY 300000 // Initial delay (300ms) before repeating
 #define REPEAT_RATE 50000   // Repeat rate (50ms) for continued input
 
