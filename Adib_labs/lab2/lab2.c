@@ -343,7 +343,8 @@ void handle_keypress(const char *keystate, char ascii_char) {
         fbputchar('|', OUT, cursor_position);
     } 
     else if (ascii_char == '\b') { // Backspace
-        if (keypress_count > 0 && cursor_position > 1) {
+        if (cursor_position > 1) {
+            // Shift characters to the left to delete at cursor position
             for (int i = cursor_position - 1; i < keypress_count - 1; i++) {
                 keypress_buffer[i][0] = keypress_buffer[i + 1][0];
             }
@@ -368,10 +369,9 @@ void handle_keypress(const char *keystate, char ascii_char) {
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
         // Shift characters to the right to insert at the cursor position
         for (int i = keypress_count; i >= cursor_position; i--) {
-            keypress_buffer[i + 1][0] = keypress_buffer[i][0];
+            keypress_buffer[i][0] = keypress_buffer[i - 1][0];
         }
         keypress_buffer[cursor_position - 1][0] = ascii_char;
-        keypress_buffer[cursor_position][1] = '\0';
         keypress_count++;
         cursor_position++;
         update_input_display();
