@@ -241,9 +241,11 @@ void handle_keypress(const char *keystate, char ascii_char) {
     } 
     else if (ascii_char == '\b' || ascii_char == 0x2A) { 
         if (keypress_count > 0) {
-            keypress_count--; // 
-            keypress_buffer[keypress_count][0] = '\0'; 
-            update_input_display(); 
+            keypress_count--; // Decrease the buffer count
+            keypress_buffer[keypress_count][0] = '\0'; // Clear the last character
+            cursor_position--; // Move cursor back
+            if (cursor_position < 1) cursor_position = 1;
+            update_input_display(); // Refresh the display
         }
     } 
 
