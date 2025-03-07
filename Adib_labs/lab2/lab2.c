@@ -19,7 +19,7 @@
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
 
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 512
 #define TOP 0
 #define BOTTOM 23
 #define DIVIDE 15
@@ -164,7 +164,8 @@ void update_input_display() {
             row++;
         }
         if (row > 22) {
-            keypress_count = 0;
+            row = 16;
+            col = 1;
             cursor_position = 1;
             fbputs(">", 20, 0);
         }   
@@ -225,7 +226,10 @@ void handle_keypress(const char *keystate, char ascii_char) {
         keypress_buffer[keypress_count][1] = '\0';
         keypress_count++;
 
-        // Update the display with new input
+        //if (keypress_count >= BUFFER_SIZE - 1) {
+        //    keypress_count = 0; // Prevent overflow
+        //}
+        
         update_input_display();
     }
 }
