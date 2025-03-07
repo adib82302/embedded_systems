@@ -189,7 +189,7 @@ void update_input_display() {
     fbputchar('/', 14, 60); 
     fbputchar('4', 14, 61);
     fbputchar('4', 14, 62);
-    fbputchar('0', 14, 63);
+    fbputchar('1', 14, 63);
 }
 /*
 void update_input_display() {
@@ -239,6 +239,14 @@ void handle_keypress(const char *keystate, char ascii_char) {
         fbputs(">", OUT, 0);
         fbputchar('|', OUT, cursor_position);
     } 
+    else if (ascii_char == '\b' || ascii_char == 0x2A) { 
+        if (keypress_count > 0) {
+            keypress_count--; // 
+            keypress_buffer[keypress_count][0] = '\0'; 
+            update_input_display(); 
+        }
+    } 
+
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE ) {
         // Store the keypress in the buffer
         keypress_buffer[keypress_count][0] = ascii_char;
