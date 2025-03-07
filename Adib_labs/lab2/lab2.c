@@ -26,8 +26,9 @@
 #define IN 8
 #define WIDTH 63
 
-// Input buffer and cursor management
-char input_buffer[BUFFER_SIZE] = {0};
+// Keypress buffer and cursor management
+char keypress_buffer[BUFFER_SIZE][12]; // Stores up to 128 keypresses as binary strings
+int keypress_count = 0;
 int cursor_position = 0;
 
 int sockfd; /* Socket file descriptor */
@@ -100,7 +101,7 @@ int main() {
             // Display in the terminal for debugging
             printf("%s\n", keystate);
             
-            // Display the keycode on the VGA screen and handle the cursor
+            // Handle the keypress and update the display
             handle_keypress(keystate);
 
             if (packet.keycode[0] == 0x29) { /* ESC pressed? */
@@ -147,33 +148,35 @@ void update_input_display() {
         fbputchar(' ', OUT, col);
     }
 
-    // Display the input buffer
-    fbputs(input_buffer, OUT, 1);
+    // Display all keypresses from the buffer
+    int col = 1;
+    for (int i = 0; i < keypress_count; i++) {
+        fbputs(keypress_buffer[i], OUT, col);
+        col += strlen(keypress_buffer[i]) + 1; // Add space between codes
+    }
 
     // Draw a static cursor as a vertical line '|'
-    fbputchar('|', OUT, cursor_position + 1);
-}
+    fbputchar('|', OUT, col);
 
-/* Handle keypresses, show keycode, and update the input buffer */
-void handle_keypress(const char *keystate) {
-    // Clear the input area to avoid overwriting
-    for (int col = 1; col < WIDTH; col++) {
-        fbputchar(' ', OUT, col);
-    }
-
-    // Display keycode at the current cursor position
-    fbputs(keystate, OUT, cursor_position + 1);
-
-    // Move the cursor to the next position
-    cursor_position += strlen(keystate) + 1;
-
-    // Reset the input area if the cursor reaches the end of the screen
-    if (cursor_position >= WIDTH - 1) {
-        cursor_position = 0;
+    // Check for overflow and reset if necessary
+    if (col >= WIDTH - 1) {
+        keypress_count = 0;
+        cursor_position = 1;
         fbputs(">", OUT, 0); // Reset input line
     }
+}
 
-    update_input_display();
+/* Handle keypresses, store in buffer, and update display */
+void handle_keypress(const char *keystate) {
+    if (keypress_count < BUFFER_SIZE - 1) {
+        // Store the keypress in the buffer
+        strncpy(keypress_buffer[keypress_count], keystate, sizeof(keypress_buffer[0]) - 1);
+        keypress_buffer[keypress_count][sizeof(keypress_buffer[0]) - 1] = '\0'; // Ensure null-terminated
+        keypress_count++;
+
+        // Update the display with new input
+        update_input_display();
+    }
 }
 
 /* Display a message in the top section of the screen */
