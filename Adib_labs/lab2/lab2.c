@@ -39,7 +39,7 @@ void *network_thread_f(void *);
 
 // Function prototypes
 void setup_screen();
-void handle_keypress(char key, const char *keystate);
+void handle_keypress(const char *keystate);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
@@ -101,7 +101,7 @@ int main() {
             printf("%s\n", keystate);
             
             // Handle the keypress for the input display and show the keycode on the VGA screen
-            handle_keypress(packet.keycode[0], keystate);
+            handle_keypress(keystate);
 
             if (packet.keycode[0] == 0x29) { /* ESC pressed? */
                 break;
@@ -147,9 +147,6 @@ void update_input_display() {
         fbputchar(' ', OUT, col);
     }
 
-    // Ensure the input buffer is null-terminated
-    input_buffer[BUFFER_SIZE - 1] = '\0';
-
     // Display the input buffer
     fbputs(input_buffer, OUT, 1);
 
@@ -158,30 +155,17 @@ void update_input_display() {
 }
 
 /* Handle keypresses, show keycode, and update the input buffer */
-void handle_keypress(char key, const char *keystate) {
-    if (key == '\n' || key == 0x28) { // Enter key
-        display_message(input_buffer);
-        memset(input_buffer, 0, BUFFER_SIZE);
-        cursor_position = 0;
-    } else if (key == '\b' || key == 0x2a) { // Backspace key
-        if (cursor_position > 0) {
-            cursor_position--;
-            input_buffer[cursor_position] = ' ';
-        }
-    } else if (cursor_position < BUFFER_SIZE - 1 && key >= 0x20 && key <= 0x7E) {
-        // Only accept printable ASCII characters
-        input_buffer[cursor_position++] = key;
-    }
-
+void handle_keypress(const char *keystate) {
     // Display keycode at the current cursor position
     fbputs(keystate, OUT, cursor_position + 1);
     
     // Move the cursor to the next position
     cursor_position += strlen(keystate) + 1;
 
-    // Ensure the cursor doesn't go beyond screen width
+    // Reset the input area if the cursor reaches the end of the screen
     if (cursor_position >= WIDTH - 1) {
-        cursor_position = WIDTH - 2;
+        cursor_position = 0;
+        fbputs(">", OUT, 0); // Reset input line
     }
 
     update_input_display();
