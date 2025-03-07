@@ -104,7 +104,8 @@ int main() {
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
             // Prepare the keycode string with raw binary output
-            sprintf(keystate, "modifiers:%02x key:%02x", packet.modifiers, packet.keycode[0]);
+            sprintf(keystate, "MOD:%02x | KEYCODE:%02x | EXTRA:%02x", packet.modifiers, packet.keycode[0], packet.keycode[1]);
+
             
             // Display in the terminal for debugging
             printf("%s\n", keystate);
