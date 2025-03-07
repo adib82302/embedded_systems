@@ -111,8 +111,11 @@ int main() {
             if (packet.keycode[0] != prev_keycodes[0]) {
                 curr_keycode = packet.keycode[0];
             }
-            else {
+            else if (packet.keycode[1] != prev_keycodes[1]) {
                 curr_keycode = packet.keycode[1];
+            }
+            else {
+                curr_keycode = 0;
             }
             if (curr_keycode != 0) {
                 print = 1;
