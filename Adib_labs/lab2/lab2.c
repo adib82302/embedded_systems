@@ -24,7 +24,19 @@ char input_buffer[INPUT_MAX] = {0};
 int cursor_position = 0;
 
 // Function Prototypes
-void setup_screen();
+void setup_screen() {
+    fbclear();
+    for (int col = 0; col < WIDTH; col++) {
+        fbputchar('*', TOP, col);       // Top border
+        fbputchar('-', DIVIDE, col);    // Middle divider
+        fbputchar('*', BOTTOM, col);    // Bottom border
+    }
+    fbputs(">", INPUT_ROW, 0); // Input prompt
+
+    // Draw a static cursor to test
+    fbputchar('|', INPUT_ROW, 10); // Should draw a cursor at column 10
+}
+
 void update_input_display();
 void handle_keypress(char key);
 void display_message(const char *message);
