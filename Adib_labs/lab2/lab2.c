@@ -149,7 +149,13 @@ void setup_screen() {
         fbputchar('*', BOTTOM, col);
     }
     fbputs(">", OUT, 0);
-    update_input_display();
+    
+    // Properly initialize the input buffer with spaces
+    memset(keypress_buffer, ' ', sizeof(keypress_buffer));
+    keypress_count = 0;
+    cursor_position = 1;
+
+    update_input_display(); // Ensure the cursor is displayed from the start
 }
 
 /* Update the input display with a static cursor */
