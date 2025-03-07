@@ -283,6 +283,13 @@ void update_input_display() {
 
 void handle_keypress(const char *keystate, char ascii_char) {
     uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
+    uint8_t extra_keycode = (uint8_t)strtol(keystate + 22, NULL, 16);
+
+// Reset held key if no extra key is pressed
+    if (extra_keycode == 0) {
+        held_keycode = 0;
+        held_ascii = 0;
+    }
 
     if (ascii_char == '\n') { // Enter key
         char message_to_send[BUFFER_SIZE] = {0};
