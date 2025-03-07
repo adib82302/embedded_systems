@@ -122,7 +122,7 @@ void fbclear()
 }
 
 void cursor_clear() {
-    for (int y = 20; y <= 22; y++) { 
+    for (int y = 16; y <= 22; y++) { 
         for (int x = 1; x < 63; x++) { 
             fbputchar(' ', y, x);
         }
