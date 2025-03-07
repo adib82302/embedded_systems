@@ -117,6 +117,9 @@ int main() {
             else {
                 curr_keycode = 0;
             }
+            if (prev_keycodes[0] != 0 && prev_keycodes[1] != 0 && (packet.keycode[0] == 0 || packet.keycode[1] == 0)) {
+                curr_keycode = 0;
+            }
             if (curr_keycode != 0) {
                 print = 1;
             }
