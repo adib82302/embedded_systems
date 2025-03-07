@@ -249,13 +249,13 @@ void handle_keypress(const char *keystate, char ascii_char) {
             update_input_display();
         }
     } 
-    else if (keycode == KEY_LEFT) { // Left Arrow
+    else if (keycode == KEY_LEFT_ARROW) { // Left Arrow
         if (cursor_position > 1) { 
             cursor_position--;
             update_input_display();
         }
     } 
-    else if (keycode == KEY_RIGHT) { // Right Arrow
+    else if (keycode == KEY_RIGHT_ARROW) { // Right Arrow
         if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
             update_input_display();
