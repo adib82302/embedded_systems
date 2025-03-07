@@ -147,24 +147,34 @@ void setup_screen() {
 
 /* Update the input display with a static cursor */
 void update_input_display() {
-    // Clear the input line
-    for (int col = 1; col < WIDTH; col++) {
-        fbputchar(' ', OUT, col);
+    // Clear the entire input area (bottom part of the screen)
+    for (int row = 16; row < 23; row++) {
+        for (int col = 0; col < WIDTH; col++) {
+            fbputchar(' ', row, col);
+        }
     }
 
-    int col = 1;
+    // Display the input buffer with line wrapping
+    int row = 16; // Start from the first row of the input area
+    int col = 1;   // Start after the ">" prompt
+
     for (int i = 0; i < keypress_count; i++) {
-        fbputchar(keypress_buffer[i][0], OUT, col++);
+        fbputchar(keypress_buffer[i][0], row, col++);
+        if (col >= WIDTH) { // When reaching the end of the line, wrap to the next row
+            col = 0;
+            row++;
+            if (row >= 23) row = 16; // Loop back to the start of input area if overflow
+        }
     }
 
     // Draw a static cursor as a vertical line '|'
-    fbputchar('|', OUT, col);
+    fbputchar('|', row, col);
 
     // Check for overflow and reset if necessary
-    if (col >= WIDTH - 1) {
+    if (row >= 23) {
         keypress_count = 0;
         cursor_position = 1;
-        fbputs(">", OUT, 0);
+        fbputs(">", 20, 0);
     }
 }
 
@@ -196,7 +206,6 @@ void handle_keypress(const char *keystate, char ascii_char) {
         keypress_buffer[keypress_count][1] = '\0';
         keypress_count++;
 
-        // Update the display with new input
         update_input_display();
     }
 }
