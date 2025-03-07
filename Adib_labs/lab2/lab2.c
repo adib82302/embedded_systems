@@ -219,9 +219,8 @@ void update_input_display() {
 
 /* Handle keypresses, store in buffer, and update display */
 void handle_keypress(const char *keystate, char ascii_char) {
-    uint8_t keycode = packet.keycode[0];
+    uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
 
-    //uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
     if (ascii_char == '\n') { // Enter key
         char message_to_send[BUFFER_SIZE] = {0};
         int msg_length = 0;
@@ -243,26 +242,25 @@ void handle_keypress(const char *keystate, char ascii_char) {
         fbputchar('|', OUT, cursor_position);
     } 
     else if (ascii_char == '\b') { // Backspace
-    if (keypress_count > 0) {
-        keypress_count--;
-        keypress_buffer[keypress_count][0] = ' '; // Clear the last character
-        update_input_display();
+        if (keypress_count > 0) {
+            keypress_count--;
+            keypress_buffer[keypress_count][0] = ' ';
+            cursor_position--;
+            update_input_display();
         }
-    }
-
-    else if (keycode == 0x50) { // Left
+    } 
+    else if (keycode == KEY_LEFT) { // Left Arrow
         if (cursor_position > 1) { 
             cursor_position--;
             update_input_display();
         }
     } 
-    else if (keycode == 0x4F) { // Right 
+    else if (keycode == KEY_RIGHT) { // Right Arrow
         if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
             update_input_display();
         }
     } 
-
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
         keypress_buffer[keypress_count][0] = ascii_char;
         keypress_buffer[keypress_count][1] = '\0';
@@ -271,6 +269,59 @@ void handle_keypress(const char *keystate, char ascii_char) {
         update_input_display();
     }
 }
+
+// void handle_keypress(const char *keystate, char ascii_char) {
+    
+//     //uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
+//     if (ascii_char == '\n') { // Enter key
+//         char message_to_send[BUFFER_SIZE] = {0};
+//         int msg_length = 0;
+
+//         for (int i = 0; i < keypress_count; i++) {
+//             message_to_send[msg_length++] = keypress_buffer[i][0];
+//         }
+
+//         if (msg_length > 0) {
+//             message_to_send[msg_length++] = '\n';
+//             send(sockfd, message_to_send, msg_length, 0);
+//         }
+
+//         memset(keypress_buffer, 0, sizeof(keypress_buffer));
+//         keypress_count = 0;
+//         cursor_position = 1;
+//         cursor_clear();
+//         fbputs(">", OUT, 0);
+//         fbputchar('|', OUT, cursor_position);
+//     } 
+//     else if (ascii_char == '\b') { // Backspace
+//     if (keypress_count > 0) {
+//         keypress_count--;
+//         keypress_buffer[keypress_count][0] = ' '; // Clear the last character
+//         update_input_display();
+//         }
+//     }
+
+//     else if (keycode == 0x50) { // Left
+//         if (cursor_position > 1) { 
+//             cursor_position--;
+//             update_input_display();
+//         }
+//     } 
+//     else if (keycode == 0x4F) { // Right 
+//         if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
+//             cursor_position++;
+//             update_input_display();
+//         }
+//     } 
+
+//     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
+//         keypress_buffer[keypress_count][0] = ascii_char;
+//         keypress_buffer[keypress_count][1] = '\0';
+//         keypress_count++;
+//         cursor_position++;
+//         update_input_display();
+//     }
+// }
 
 // void handle_keypress(const char *keystate, char ascii_char) {
 //     // Check if the Enter key is pressed
