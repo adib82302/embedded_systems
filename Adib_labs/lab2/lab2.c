@@ -107,7 +107,7 @@ int main() {
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
             // Prepare the keycode string with raw binary output
-            bool print = 0;
+            int print = 0;
             if (packet.keycode[0] != prev_keycodes[0]) {
                 curr_keycode = packet.keycode[0];
             }
