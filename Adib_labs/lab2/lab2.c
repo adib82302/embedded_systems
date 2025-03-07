@@ -6,7 +6,6 @@
  * Name/UNI: Adib Khondoker (aak2250)
  */
 #include "fbputchar.h"
-#include "keymap.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +13,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "usbkeyboard.h"
+#include "keymap.h"
 #include <pthread.h>
 
 #define SERVER_HOST "128.59.19.114"
@@ -28,7 +28,7 @@
 #define WIDTH 63
 
 // Keypress buffer and cursor management
-char keypress_buffer[BUFFER_SIZE][12]; // Stores up to 128 keypresses as strings
+char keypress_buffer[BUFFER_SIZE][12]; // Stores up to 128 keypresses as binary strings
 int keypress_count = 0;
 int cursor_position = 0;
 
@@ -41,7 +41,7 @@ void *network_thread_f(void *);
 
 // Function prototypes
 void setup_screen();
-void handle_keypress(const char *keystate);
+void handle_keypress(const char *keystate, char ascii_char);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
@@ -96,9 +96,17 @@ int main() {
                                   (unsigned char *)&packet, sizeof(packet),
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
-            sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0], packet.keycode[1]);
+            // Prepare the keycode string with raw binary output
+            sprintf(keystate, "modifiers:%02x key:%02x", packet.modifiers, packet.keycode[0]);
+            
+            // Display in the terminal for debugging
             printf("%s\n", keystate);
-            handle_keypress(keystate);
+
+            // Convert keycode to ASCII
+            char ascii_char = keycode_to_char(packet.modifiers, packet.keycode[0]);
+            
+            // Process the keypress and update display
+            handle_keypress(keystate, ascii_char);
 
             if (packet.keycode[0] == 0x29) { /* ESC pressed? */
                 break;
@@ -139,18 +147,20 @@ void setup_screen() {
 
 /* Update the input display with a static cursor */
 void update_input_display() {
+    // Clear the input line
     for (int col = 1; col < WIDTH; col++) {
         fbputchar(' ', OUT, col);
     }
 
     int col = 1;
     for (int i = 0; i < keypress_count; i++) {
-        fbputs(keypress_buffer[i], OUT, col);
-        col += strlen(keypress_buffer[i]) + 1;
+        fbputchar(keypress_buffer[i][0], OUT, col++);
     }
 
+    // Draw a static cursor as a vertical line '|'
     fbputchar('|', OUT, col);
 
+    // Check for overflow and reset if necessary
     if (col >= WIDTH - 1) {
         keypress_count = 0;
         cursor_position = 1;
@@ -158,25 +168,18 @@ void update_input_display() {
     }
 }
 
-/* Handle keypresses, store in buffer, and send message on Enter */
-void handle_keypress(const char *keystate) {
-    uint8_t modifiers, keycode;
-    sscanf(keystate, "%02hhx %02hhx", &modifiers, &keycode);
-
-    char ascii_char = keycode_to_char(modifiers, keycode);
-
+/* Handle keypresses, store in buffer, and update display */
+void handle_keypress(const char *keystate, char ascii_char) {
     if (ascii_char == '\n') { // Enter key
         char message_to_send[BUFFER_SIZE] = {0};
         int msg_length = 0;
 
         for (int i = 0; i < keypress_count; i++) {
-            strncat(message_to_send, keypress_buffer[i], BUFFER_SIZE - msg_length - 1);
-            msg_length = strlen(message_to_send);
+            message_to_send[msg_length++] = keypress_buffer[i][0];
         }
 
         if (msg_length > 0) {
             send(sockfd, message_to_send, msg_length, 0);
-            display_message(message_to_send);
         }
 
         memset(keypress_buffer, 0, sizeof(keypress_buffer));
@@ -184,20 +187,14 @@ void handle_keypress(const char *keystate) {
         cursor_position = 1;
         fbputs(">", OUT, 0);
     } 
-    else if (ascii_char == '\b') { // Backspace
-        if (keypress_count > 0) {
-            keypress_count--;
-            keypress_buffer[keypress_count][0] = '\0';
-            update_input_display();
-        }
-    } 
-    else if (ascii_char) { // Regular character
-        if (keypress_count < BUFFER_SIZE - 1) {
-            keypress_buffer[keypress_count][0] = ascii_char;
-            keypress_buffer[keypress_count][1] = '\0';
-            keypress_count++;
-            update_input_display();
-        }
+    else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
+        // Store the keypress in the buffer
+        keypress_buffer[keypress_count][0] = ascii_char;
+        keypress_buffer[keypress_count][1] = '\0';
+        keypress_count++;
+
+        // Update the display with new input
+        update_input_display();
     }
 }
 
