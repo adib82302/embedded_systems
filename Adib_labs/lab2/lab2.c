@@ -291,41 +291,41 @@ void handle_keypress(const char *keystate, char ascii_char) {
             send(sockfd, message_to_send, msg_length, 0);
         }
 
-        memset(keypress_buffer, ' ', sizeof(keypress_buffer)); // Clear buffer with spaces
+        memset(keypress_buffer, '\0', sizeof(keypress_buffer)); // Ensure buffer is fully cleared
         keypress_count = 0;
         cursor_position = 1;
         cursor_clear();
         fbputs(">", OUT, 0);
         fbputchar('|', OUT, cursor_position);
-        held_keycode = 0; // Stop any held key action
+        held_keycode = 0;
         held_ascii = 0;
     } 
     else if (ascii_char == '\b') { // Backspace
         if (cursor_position > 1) {
-            // Shift characters to the left of the cursor position
+            // Shift characters left and clear the last slot
             for (int i = cursor_position - 1; i < keypress_count - 1; i++) {
                 keypress_buffer[i][0] = keypress_buffer[i + 1][0];
             }
             keypress_count--;
-            keypress_buffer[keypress_count][0] = ' '; // Clear the last character space
-            cursor_position--;
+            keypress_buffer[keypress_count][0] = ' '; // Clear last character
+            if (cursor_position > 1) cursor_position--;
             update_input_display();
         }
-        held_keycode = 0; // Stop repeat on backspace
+        held_keycode = 0;
     } 
     else if (ascii_char == LEFT_ARROW) { // Left Arrow
         if (cursor_position > 1) { 
             cursor_position--;
         }
         update_input_display();
-        held_keycode = 0; // Stop repeat on arrow key
+        held_keycode = 0;
     } 
     else if (ascii_char == RIGHT_ARROW) { // Right Arrow
-        if (cursor_position <= keypress_count && cursor_position < BUFFER_SIZE - 1) {
+        if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
         }
         update_input_display();
-        held_keycode = 0; // Stop repeat on arrow key
+        held_keycode = 0;
     } 
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
         // Add character to buffer at the current cursor position
@@ -338,7 +338,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
         cursor_position++;
         update_input_display();
 
-        // Only enable repeat if 'r' is pressed
+        // Enable repeat only for 'r' key
         if (ascii_char == 'r') {
             held_keycode = keycode;
             held_ascii = ascii_char;
@@ -349,13 +349,13 @@ void handle_keypress(const char *keystate, char ascii_char) {
         }
     }
 
-    // Handle key release
+    // Stop held key on release
     if (keycode == 0) {
         held_keycode = 0;
         held_ascii = 0;
     }
 
-    // Auto-repeat only for the 'r' key
+    // Auto-repeat logic for 'r' key
     if (held_keycode != 0 && held_ascii == 'r') {
         struct timespec current_time;
         clock_gettime(CLOCK_MONOTONIC, &current_time);
@@ -364,7 +364,6 @@ void handle_keypress(const char *keystate, char ascii_char) {
 
         if (elapsed_ms > REPEAT_RATE) {
             if (keypress_count < BUFFER_SIZE - 1) {
-                // Insert 'r' repeatedly while key is held
                 for (int i = keypress_count; i > cursor_position - 1; i--) {
                     keypress_buffer[i][0] = keypress_buffer[i - 1][0];
                 }
@@ -377,6 +376,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
         }
     }
 }
+
 
 
 // void handle_keypress(const char *keystate, char ascii_char) {
