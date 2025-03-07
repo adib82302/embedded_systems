@@ -50,7 +50,7 @@ void *network_thread_f(void *);
 
 // Function prototypes
 void setup_screen();
-void handle_keypress(const char *keystate, char ascii_char);
+void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
@@ -130,7 +130,7 @@ int main() {
             ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
             
             // Process the keypress and update display
-            handle_keypress(keystate, ascii_char);
+            handle_keypress(keystate, ascii_char, packet.modifiers);
 
             if (curr_keycode == 0x29) { /* ESC pressed? */
                 break;
@@ -229,7 +229,7 @@ void update_input_display() {
 
 /* Handle keypresses, store in buffer, and update display */
 
-void handle_keypress(const char *keystate, char ascii_char) {
+void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers) {
     uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
     uint8_t extra_keycode = (uint8_t)strtol(keystate + 22, NULL, 16);
 
@@ -274,14 +274,14 @@ void handle_keypress(const char *keystate, char ascii_char) {
         }
         held_keycode = 0; // Stop repeat on backspace
     } 
-    else if (ascii_char == LEFT_ARROW) { // Left Arrow
+    else if (ascii_char == LEFT_ARROW && !modifiers) { // Left Arrow
         if (cursor_position > 1) { 
             cursor_position--;
         }
         update_input_display();
         held_keycode = 0; // Stop repeat on arrow key
     } 
-    else if (ascii_char == RIGHT_ARROW) { // Right Arrow
+    else if (ascii_char == RIGHT_ARROW && !modifiers) { // Right Arrow
         if (cursor_position <= keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
         }
