@@ -239,20 +239,13 @@ void handle_keypress(const char *keystate, char ascii_char) {
         fbputs(">", OUT, 0);
         fbputchar('|', OUT, cursor_position);
     } 
-    else if (ascii_char == '\b' || ascii_char == 0x2A) { // Backspace key
-        printf("Backspace detected! Keypress count before: %d\n", keypress_count);
-
-        if (keypress_count > 0) {
-            keypress_count--; // Remove the last character from the buffer
-            keypress_buffer[keypress_count][0] = '\0'; // Clear the buffer position
-            
-            // Move cursor back and clear the last character on the screen
-            cursor_position--;
-            if (cursor_position < 1) cursor_position = 1;
-
-            update_input_display(); // Update the display to reflect backspace
-        }
-    } 
+    else if (ascii_char == '\b') { // Backspace
+    if (keypress_count > 0) {
+        keypress_count--;
+        keypress_buffer[keypress_count][0] = ' '; // Clear the last character
+        update_input_display();
+    }
+}
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
         keypress_buffer[keypress_count][0] = ascii_char;
         keypress_buffer[keypress_count][1] = '\0';
