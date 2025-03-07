@@ -15,6 +15,11 @@
 #include "usbkeyboard.h"
 #include "keymap.h"
 #include <pthread.h>
+#include <time.h>
+#include <unistd.h>
+
+#define REPEAT_DELAY 300000 // Initial delay (300ms) before repeating
+#define REPEAT_RATE 50000   // Repeat rate (50ms) for continued input
 
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
@@ -26,7 +31,9 @@
 #define OUT 16
 #define IN 8
 #define WIDTH 63
-
+uint8_t held_keycode = 0;
+char held_ascii = 0;
+struct timespec last_repeat_time;
 // Keypress buffer and cursor management
 char keypress_buffer[BUFFER_SIZE][12]; // Stores up to 128 keypresses as binary strings
 int keypress_count = 0;
@@ -269,6 +276,7 @@ void update_input_display() {
 /* Handle keypresses, store in buffer, and update display */
 
 void handle_keypress(const char *keystate, char ascii_char) {
+    uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
 
     if (ascii_char == '\n') { // Enter key
         char message_to_send[BUFFER_SIZE] = {0};
@@ -294,11 +302,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
         if (keypress_count > 0) {
             keypress_count--;
             keypress_buffer[keypress_count][0] = ' ';
-            if (cursor_position > keypress_count) {
-                cursor_position = keypress_count + 1; // Ensure cursor is at the end
-            } else {
-                cursor_position--;
-            }
+            cursor_position--;
             update_input_display();
         }
     } 
@@ -309,19 +313,107 @@ void handle_keypress(const char *keystate, char ascii_char) {
         }
     } 
     else if (ascii_char == RIGHT_ARROW) { // Right Arrow
-        if (cursor_position <= keypress_count && cursor_position < BUFFER_SIZE - 1) {
+        if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
             update_input_display();
         }
     } 
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
+        // Handle normal character input
         keypress_buffer[keypress_count][0] = ascii_char;
         keypress_buffer[keypress_count][1] = '\0';
         keypress_count++;
-        cursor_position = keypress_count + 1; // Move cursor to the new end
+        cursor_position++;
         update_input_display();
+
+        // Start key hold detection
+        held_keycode = keycode;
+        held_ascii = ascii_char;
+        clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+    }
+
+    // Handle key release (keycode 0 means no key pressed)
+    if (keycode == 0) {
+        held_keycode = 0;
+        held_ascii = 0;
+    }
+
+    // Check if a key is being held down for repeat action
+    if (held_keycode != 0 && held_ascii != 0) {
+        struct timespec current_time;
+        clock_gettime(CLOCK_MONOTONIC, &current_time);
+        long elapsed_ms = (current_time.tv_sec - last_repeat_time.tv_sec) * 1000 +
+                          (current_time.tv_nsec - last_repeat_time.tv_nsec) / 1000000;
+
+        // Apply initial delay before starting repeat
+        if (elapsed_ms > REPEAT_DELAY) {
+            keypress_buffer[keypress_count][0] = held_ascii;
+            keypress_buffer[keypress_count][1] = '\0';
+            keypress_count++;
+            cursor_position++;
+            update_input_display();
+
+            // Reset the timer for continuous repeat rate
+            usleep(REPEAT_RATE);
+            clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+        }
     }
 }
+
+// void handle_keypress(const char *keystate, char ascii_char) {
+
+//     if (ascii_char == '\n') { // Enter key
+//         char message_to_send[BUFFER_SIZE] = {0};
+//         int msg_length = 0;
+
+//         for (int i = 0; i < keypress_count; i++) {
+//             message_to_send[msg_length++] = keypress_buffer[i][0];
+//         }
+
+//         if (msg_length > 0) {
+//             message_to_send[msg_length++] = '\n';
+//             send(sockfd, message_to_send, msg_length, 0);
+//         }
+
+//         memset(keypress_buffer, 0, sizeof(keypress_buffer));
+//         keypress_count = 0;
+//         cursor_position = 1;
+//         cursor_clear();
+//         fbputs(">", OUT, 0);
+//         fbputchar('|', OUT, cursor_position);
+//     } 
+//     else if (ascii_char == '\b') { // Backspace
+//         if (keypress_count > 0) {
+//             keypress_count--;
+//             keypress_buffer[keypress_count][0] = ' ';
+//             if (cursor_position > keypress_count) {
+//                 cursor_position = keypress_count + 1; // Ensure cursor is at the end
+//             } else {
+//                 cursor_position--;
+//             }
+//             update_input_display();
+//         }
+//     } 
+//     else if (ascii_char == LEFT_ARROW) { // Left Arrow
+//         if (cursor_position > 1) { 
+//             cursor_position--;
+//             update_input_display();
+//         }
+//     } 
+//     else if (ascii_char == RIGHT_ARROW) { // Right Arrow
+//         if (cursor_position <= keypress_count && cursor_position < BUFFER_SIZE - 1) {
+//             cursor_position++;
+//             update_input_display();
+//         }
+//     } 
+//     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
+//         keypress_buffer[keypress_count][0] = ascii_char;
+//         keypress_buffer[keypress_count][1] = '\0';
+//         keypress_count++;
+//         cursor_position = keypress_count + 1; // Move cursor to the new end
+//         update_input_display();
+//     }
+// }
 
 
 // void handle_keypress(const char *keystate, char ascii_char) {
