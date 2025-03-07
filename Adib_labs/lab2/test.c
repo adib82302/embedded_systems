@@ -1,31 +1,41 @@
-void update_input_display() {
-    // Clear the entire input area (bottom part of the screen)
-    for (int row = 16; row < 23; row++) {
-        for (int col = 1; col < WIDTH; col++) {
-            fbputchar(' ', row, col);
+void handle_keypress(const char *keystate, char ascii_char) {
+    // Check if the Enter key is pressed
+    if (ascii_char == '\n') { 
+        char message_to_send[BUFFER_SIZE] = {0};
+        int msg_length = 0;
+
+        for (int i = 0; i < keypress_count; i++) {
+            message_to_send[msg_length++] = keypress_buffer[i][0];
         }
-    }
 
-    // Display the input buffer with line wrapping
-    int row = 16; // Start from the first row of the input area
-    int col = 1;   // Start after the ">" prompt
-
-    for (int i = 0; i < keypress_count; i++) {
-        fbputchar(keypress_buffer[i][0], row, col++);
-        if (col >= WIDTH) { // When reaching the end of the line, wrap to the next row
-            col = 0;
-            row++;
-            if (row >= 23) row = 16; // Loop back to the start of input area if overflow
+        if (msg_length > 0) {
+            message_to_send[msg_length++] = '\n';
+            send(sockfd, message_to_send, msg_length, 0);
         }
-    }
 
-    // Draw a static cursor as a vertical line '|'
-    fbputchar('|', row, col);
-
-    // Check for overflow and reset if necessary
-    if (row >= 23) {
+        memset(keypress_buffer, 0, sizeof(keypress_buffer));
         keypress_count = 0;
         cursor_position = 1;
-        fbputs(">", 20, 0);
+        cursor_clear();
+        fbputs(">", OUT, 0);
+        fbputchar('|', OUT, cursor_position);
+    } 
+    // Check if the Backspace key is pressed
+    else if (ascii_char == '\b' || ascii_char == 0x2A) { 
+        if (keypress_count > 0) {
+            keypress_count--; // Decrease the buffer count
+            keypress_buffer[keypress_count][0] = '\0'; // Clear the last character
+            cursor_position--; // Move cursor back
+            if (cursor_position < 1) cursor_position = 1;
+            update_input_display(); // Refresh the display
+        }
+    } 
+    // Normal character input handling
+    else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
+        keypress_buffer[keypress_count][0] = ascii_char;
+        keypress_buffer[keypress_count][1] = '\0';
+        keypress_count++;
+        cursor_position++;
+        update_input_display();
     }
 }
