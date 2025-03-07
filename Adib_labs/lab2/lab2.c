@@ -102,43 +102,37 @@ int main() {
     uint8_t curr_keycode = 0x00;
     /* Look for and handle keypresses */
     for (;;) {
-        if (curr_keycode == 0x00) {
-          libusb_interrupt_transfer(keyboard, endpoint_address,
-                                    (unsigned char *)&packet, sizeof(packet),
-                                    &transferred, 0);
-          if (transferred == sizeof(packet)) {
-              // Prepare the keycode string with raw binary output
-              if (packet.keycode[0] != prev_keycodes[0]) {
-                  curr_keycode = packet.keycode[0];
-              }
-              else if (packet.keycode[1] != prev_keycodes[1]) {
-                  curr_keycode = packet.keycode[1];
-              }
-              else {
-                  curr_keycode = packet.keycode[0];
-              }
-              prev_keycodes[0] = packet.keycode[0];
-              prev_keycodes[1] = packet.keycode[1];
-              sprintf(keystate, "MOD:%02x | KEYCODE:%02x | EXTRA:%02x", packet.modifiers, curr_keycode);
-  
-              
-              // Display in the terminal for debugging
-              printf("%s\n", keystate);
-  
-              // Convert keycode to ASCII
-              ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
-              
-              // Process the keypress and update display
-              handle_keypress(keystate, ascii_char);
-  
-              if (curr_keycode == 0x29) { /* ESC pressed? */
-                  break;
-              }
-          }
-        }
-        else {
-            sleep(0.1);
+        libusb_interrupt_transfer(keyboard, endpoint_address,
+                                  (unsigned char *)&packet, sizeof(packet),
+                                  &transferred, 0);
+        if (transferred == sizeof(packet)) {
+            // Prepare the keycode string with raw binary output
+            if (packet.keycode[0] != prev_keycodes[0]) {
+                curr_keycode = packet.keycode[0];
+            }
+            else if (packet.keycode[1] != prev_keycodes[1]) {
+                curr_keycode = packet.keycode[1];
+            }
+            else {
+                curr_keycode = packet.keycode[0];
+            }
+            prev_keycodes[0] = packet.keycode[0];
+            prev_keycodes[1] = packet.keycode[1];
+            sprintf(keystate, "MOD:%02x | KEYCODE:%02x | EXTRA:%02x", packet.modifiers, curr_keycode);
+
+            
+            // Display in the terminal for debugging
+            printf("%s\n", keystate);
+
+            // Convert keycode to ASCII
+            ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
+            
+            // Process the keypress and update display
             handle_keypress(keystate, ascii_char);
+
+            if (curr_keycode == 0x29) { /* ESC pressed? */
+                break;
+            }
         }
     }
 
