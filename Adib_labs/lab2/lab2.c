@@ -53,7 +53,6 @@ int main() {
     struct usb_keyboard_packet packet;
     int transferred;
     char keystate[12];
-    time_t last_toggle = 0;
 
     if ((err = fbopen()) != 0) {
         fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
@@ -114,11 +113,8 @@ int main() {
         }
 
         // Blink the cursor every 500ms
-        time_t now = time(NULL);
-        if (now - last_toggle >= 0.5) {
-            toggle_cursor();
-            last_toggle = now;
-        }
+        usleep(500000); // 500ms delay for consistent cursor blinking
+        toggle_cursor();
     }
 
     /* Terminate the network thread */
