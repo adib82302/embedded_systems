@@ -19,7 +19,7 @@
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
 
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 448
 #define TOP 0
 #define BOTTOM 23
 #define DIVIDE 15
@@ -171,7 +171,7 @@ void update_input_display() {
         //     fbputs(">", 20, 0);
         // }   
     }
-    if (row <= 23) {
+    if (row <= 22) {
         fbputchar('|', row, col);
     }
     //fbputchar('|', row, col);
