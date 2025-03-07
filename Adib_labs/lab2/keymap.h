@@ -5,14 +5,13 @@
 #include <stdint.h>
 #include "usbkeyboard.h"
 
-// Special key definitions for easier reference
-#define KEY_ENTER    0x28
-#define KEY_BACKSPACE 0x2A
-#define KEY_SPACE    0x2C
-#define KEY_LEFT     0x50
-#define KEY_RIGHT    0x4F
-#define KEY_UP       0x52
-#define KEY_DOWN     0x51
+// Define special keycodes as distinct characters
+#define KEY_BACKSPACE '\b'
+#define KEY_ENTER '\n'
+#define KEY_LEFT_ARROW 0x50
+#define KEY_RIGHT_ARROW 0x4F
+#define KEY_UP_ARROW 0x52
+#define KEY_DOWN_ARROW 0x51
 
 // Non-shifted keycode to ASCII mapping
 const char keycode_to_ascii[256] = {
@@ -25,11 +24,13 @@ const char keycode_to_ascii[256] = {
     [0x1C] = 'y', [0x1D] = 'z', [0x1E] = '1', [0x1F] = '2',
     [0x20] = '3', [0x21] = '4', [0x22] = '5', [0x23] = '6',
     [0x24] = '7', [0x25] = '8', [0x26] = '9', [0x27] = '0',
-    [KEY_ENTER] = '\n', [KEY_BACKSPACE] = '\b',
-    [KEY_SPACE] = ' ', [0x2D] = '-', [0x2E] = '=',
+    [0x28] = KEY_ENTER, [0x2A] = KEY_BACKSPACE,
+    [0x2C] = ' ', [0x2D] = '-', [0x2E] = '=',
     [0x2F] = '[', [0x30] = ']', [0x31] = '\\', [0x33] = ';',
     [0x34] = '\'', [0x35] = '`', [0x36] = ',', [0x37] = '.',
-    [0x38] = '/'
+    [0x38] = '/',
+    [0x50] = KEY_LEFT_ARROW, [0x4F] = KEY_RIGHT_ARROW,
+    [0x51] = KEY_DOWN_ARROW, [0x52] = KEY_UP_ARROW
 };
 
 // Shifted keycode to ASCII mapping
@@ -46,11 +47,10 @@ const char keycode_to_ascii_shift[256] = {
     [0x10] = 'M', [0x11] = 'N', [0x12] = 'O', [0x13] = 'P',
     [0x14] = 'Q', [0x15] = 'R', [0x16] = 'S', [0x17] = 'T',
     [0x18] = 'U', [0x19] = 'V', [0x1A] = 'W', [0x1B] = 'X',
-    [0x1C] = 'Y', [0x1D] = 'Z',
-    [KEY_BACKSPACE] = '\b'
+    [0x1C] = 'Y', [0x1D] = 'Z'
 };
 
-// Convert keycode and modifiers to ASCII
+// Convert keycode and modifiers to ASCII or special key
 char keycode_to_char(uint8_t modifiers, uint8_t keycode) {
     int shift = (modifiers & (USB_LSHIFT | USB_RSHIFT)) ? 1 : 0;
 
@@ -65,6 +65,7 @@ char keycode_to_char(uint8_t modifiers, uint8_t keycode) {
 }
 
 #endif
+
 
 // #ifndef _KEYMAP_H
 // #define _KEYMAP_H
