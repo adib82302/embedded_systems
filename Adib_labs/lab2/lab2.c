@@ -179,7 +179,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
         }
 
         if (msg_length > 0) {
-            message_to_send[msg_length++] = keypress_buffer '/n';
+            message_to_send[msg_length++] = '/n';
             send(sockfd, message_to_send, msg_length, 0);
         }
 
