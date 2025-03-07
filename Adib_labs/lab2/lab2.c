@@ -343,10 +343,13 @@ void handle_keypress(const char *keystate, char ascii_char) {
         fbputchar('|', OUT, cursor_position);
     } 
     else if (ascii_char == '\b') { // Backspace
-        if (keypress_count > 0) {
+        if (keypress_count > 0 && cursor_position > 1) {
+            for (int i = cursor_position - 1; i < keypress_count - 1; i++) {
+                keypress_buffer[i][0] = keypress_buffer[i + 1][0];
+            }
             keypress_count--;
-            keypress_buffer[keypress_count][0] = ' ';
             cursor_position--;
+            keypress_buffer[keypress_count][0] = ' ';
             update_input_display();
         }
     } 
@@ -357,19 +360,24 @@ void handle_keypress(const char *keystate, char ascii_char) {
         update_input_display();
     } 
     else if (ascii_char == RIGHT_ARROW) { // Right Arrow
-        if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
+        if (cursor_position <= keypress_count && cursor_position < BUFFER_SIZE - 1) {
             cursor_position++;
         }
         update_input_display();
     } 
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
-        keypress_buffer[keypress_count][0] = ascii_char;
-        keypress_buffer[keypress_count][1] = '\0';
+        // Shift characters to the right to insert at the cursor position
+        for (int i = keypress_count; i >= cursor_position; i--) {
+            keypress_buffer[i + 1][0] = keypress_buffer[i][0];
+        }
+        keypress_buffer[cursor_position - 1][0] = ascii_char;
+        keypress_buffer[cursor_position][1] = '\0';
         keypress_count++;
         cursor_position++;
         update_input_display();
     }
 }
+
 
 // void handle_keypress(const char *keystate, char ascii_char) {
     
