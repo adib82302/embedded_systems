@@ -187,7 +187,7 @@ void update_input_display() {
         if (i <= keypress_count) {
             fbputchar(keypress_buffer[i][0], row, col++);
         }
-        if (i == cursor_position) {
+        if (i == cursor_position - 1) {
             fbputchar('|', row, col++); // Draw the cursor at the correct position
             if (col >= WIDTH) { // Handle line wrapping
                 col = 0;
