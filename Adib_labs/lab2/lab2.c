@@ -6,15 +6,17 @@
  * Name/UNI: Adib Khondoker (aak2250)
  */
 #include "fbputchar.h"
+#include "keymap.h"
+#include "usbkeyboard.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "usbkeyboard.h"
 #include <pthread.h>
 
+/* Server details */
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
 
@@ -26,38 +28,77 @@
 #define IN 8
 #define WIDTH 63
 
-// Keypress buffer and cursor management
-char keypress_buffer[BUFFER_SIZE][12]; // Stores up to 128 keypresses as binary strings
-int keypress_count = 0;
-int cursor_position = 0;
-
 int sockfd; /* Socket file descriptor */
+
 struct libusb_device_handle *keyboard;
 uint8_t endpoint_address;
 
 pthread_t network_thread;
 void *network_thread_f(void *);
 
-// Function prototypes
-void setup_screen();
-void handle_keypress(const char *keystate);
-void update_input_display();
-void display_message(const char *message);
-void clear_receive_area();
+/* Input buffer */
+char input_buffer[BUFFER_SIZE] = {0};
+int cursor_position = 0;
+
+/* Update the input display on the VGA screen */
+void update_input_display() {
+    /* Clear the input line */
+    for (int col = 1; col < WIDTH; col++) {
+        fbputchar(' ', OUT, col);
+    }
+
+    /* Display the input buffer */
+    fbputs(input_buffer, OUT, 1);
+
+    /* Display the cursor */
+    fbputchar('|', OUT, cursor_position + 1);
+}
+
+/* Handle keypress and update the input buffer */
+void handle_keypress(char key) {
+    if (key == '\n') { /* Enter key */
+        if (strlen(input_buffer) > 0) {
+            write(sockfd, input_buffer, strlen(input_buffer));
+            memset(input_buffer, 0, BUFFER_SIZE);
+            cursor_position = 0;
+        }
+    } else if (key == '\b') { /* Backspace key */
+        if (cursor_position > 0) {
+            cursor_position--;
+            input_buffer[cursor_position] = ' ';
+        }
+    } else if (key) { /* Regular character */
+        if (cursor_position < WIDTH - 2) {
+            input_buffer[cursor_position++] = key;
+        }
+    }
+    update_input_display();
+}
 
 int main() {
     int err;
+
     struct sockaddr_in serv_addr;
+
     struct usb_keyboard_packet packet;
     int transferred;
-    char keystate[12];
 
     if ((err = fbopen()) != 0) {
         fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
         exit(1);
     }
 
-    setup_screen();
+    fbclear();
+
+    /* Draw the screen borders */
+    for (int col = 0; col < WIDTH; col++) {
+        fbputchar('*', TOP, col);
+        fbputchar('-', DIVIDE, col);
+        fbputchar('*', BOTTOM, col);
+        fbputs(">", OUT, 0);
+    }
+
+    fbputs("Hello CSEE 4840 World!", 4, 10);
 
     /* Open the keyboard */
     if ((keyboard = openkeyboard(&endpoint_address)) == NULL) {
@@ -71,7 +112,7 @@ int main() {
         exit(1);
     }
 
-    /* Get the server address */
+    /* Configure server address */
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(SERVER_PORT);
@@ -80,7 +121,7 @@ int main() {
         exit(1);
     }
 
-    /* Connect the socket to the server */
+    /* Connect to the server */
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         fprintf(stderr, "Error: connect() failed. Is the server running?\n");
         exit(1);
@@ -89,124 +130,38 @@ int main() {
     /* Start the network thread */
     pthread_create(&network_thread, NULL, network_thread_f, NULL);
 
-    /* Look for and handle keypresses */
+    /* Handle USB keyboard input */
     for (;;) {
         libusb_interrupt_transfer(keyboard, endpoint_address,
                                   (unsigned char *)&packet, sizeof(packet),
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
-            // Prepare the keycode string
-            sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0], packet.keycode[1]);
-            
-            // Display in the terminal for debugging
-            printf("%s\n", keystate);
-            
-            // Handle the keypress and update the display
-            handle_keypress(keystate);
-
-            if (packet.keycode[0] == 0x29) { /* ESC pressed? */
+            char ascii = keycode_to_char(packet.modifiers, packet.keycode[0]);
+            if (ascii) {
+                handle_keypress(ascii);
+            }
+            if (packet.keycode[0] == 0x29) { /* ESC pressed */
                 break;
             }
         }
     }
 
-    /* Terminate the network thread */
+    /* Clean up */
     pthread_cancel(network_thread);
     pthread_join(network_thread, NULL);
 
     return 0;
 }
 
+/* Network thread to receive messages */
 void *network_thread_f(void *ignored) {
     char recvBuf[BUFFER_SIZE];
     int n;
-    /* Receive data */
+
     while ((n = read(sockfd, &recvBuf, BUFFER_SIZE - 1)) > 0) {
         recvBuf[n] = '\0';
-        printf("%s", recvBuf);
-        display_message(recvBuf);
+        fbputs(recvBuf, IN, 0);
     }
+
     return NULL;
-}
-
-/* Initialize the screen */
-void setup_screen() {
-    fbclear();
-    for (int col = 0; col < WIDTH; col++) {
-        fbputchar('*', TOP, col);
-        fbputchar('-', DIVIDE, col);
-        fbputchar('*', BOTTOM, col);
-    }
-    fbputs(">", OUT, 0);
-    update_input_display();
-}
-
-/* Update the input display with a static cursor */
-void update_input_display() {
-    // Clear the input line
-    for (int col = 1; col < WIDTH; col++) {
-        fbputchar(' ', OUT, col);
-    }
-
-    // Display all keypresses from the buffer
-    int col = 1;
-    for (int i = 0; i < keypress_count; i++) {
-        fbputs(keypress_buffer[i], OUT, col);
-        col += strlen(keypress_buffer[i]) + 1; // Add space between codes
-    }
-
-    // Draw a static cursor as a vertical line '|'
-    fbputchar('|', OUT, col);
-
-    // Check for overflow and reset if necessary
-    if (col >= WIDTH - 1) {
-        keypress_count = 0;
-        cursor_position = 1;
-        fbputs(">", OUT, 0); // Reset input line
-    }
-}
-
-/* Handle keypresses, store in buffer, and update display */
-void handle_keypress(const char *keystate) {
-    if (keypress_count < BUFFER_SIZE - 1) {
-        // Store the keypress in the buffer
-        strncpy(keypress_buffer[keypress_count], keystate, sizeof(keypress_buffer[0]) - 1);
-        keypress_buffer[keypress_count][sizeof(keypress_buffer[0]) - 1] = '\0'; // Ensure null-terminated
-        keypress_count++;
-
-        // Update the display with new input
-        update_input_display();
-    }
-}
-
-/* Display a message in the top section of the screen */
-void display_message(const char *message) {
-    static int row = 1;
-    int col = 0;
-    const char *p = message;
-
-    while (*p) {
-        if (*p == '\n' || col >= WIDTH) {
-            row++;
-            col = 0;
-        }
-        if (row >= DIVIDE) {
-            row = 1;
-            clear_receive_area();
-        }
-        if (*p != '\n') {
-            fbputchar(*p, row, col++);
-        }
-        p++;
-    }
-    row++;
-}
-
-/* Clear only the receive area */
-void clear_receive_area() {
-    for (int row = 1; row < DIVIDE; row++) {
-        for (int col = 0; col < WIDTH; col++) {
-            fbputchar(' ', row, col);
-        }
-    }
 }
