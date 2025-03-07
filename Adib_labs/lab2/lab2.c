@@ -186,8 +186,9 @@ void handle_keypress(const char *keystate, char ascii_char) {
         memset(keypress_buffer, 0, sizeof(keypress_buffer));
         keypress_count = 0;
         cursor_position = 1;
-        fbputs(">", OUT, 0);
         cursor_clear();
+        fbputs(">", OUT, 0);
+        fbputchar('|', OUT, col);
     } 
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
         // Store the keypress in the buffer
