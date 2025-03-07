@@ -122,9 +122,9 @@ void fbclear()
 }
 
 void cursor_clear() {
-    for (int y = 16; y <= 22; y++) { 
-        for (int x = 1; x < 63; x++) { 
-            fbputchar(' ', y, x);
+    for (int row = 16; row <= 22; row++) { 
+        for (int column = 0; column < 63; column++) { 
+            fbputchar(' ', row, column);
         }
     }
 }

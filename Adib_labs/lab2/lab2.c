@@ -149,11 +149,8 @@ void setup_screen() {
 
 void update_input_display() {
     // Clear the entire input area (bottom part of the screen)
-    for (int row = 16; row < 22; row++) {
-        for (int col = 1; col < WIDTH; col++) {
-            fbputchar(' ', row, col);
-        }
-    }
+
+    cursor_clear();
 
     // Display the input buffer with line wrapping
     int row = 16; // Start from the first row of the input area
@@ -172,7 +169,7 @@ void update_input_display() {
     fbputchar('|', row, col);
 
     // Check for overflow and reset if necessary
-    if (row >= 22) {
+    if (row > 22) {
         keypress_count = 0;
         cursor_position = 1;
         fbputs(">", 20, 0);
