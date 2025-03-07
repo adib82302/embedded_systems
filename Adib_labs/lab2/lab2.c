@@ -146,43 +146,46 @@ void setup_screen() {
 }
 
 /* Update the input display with a static cursor */
-
 void update_input_display() {
-    // Clear the entire input area (bottom part of the screen)
-
+    // Clear the entire input area
     cursor_clear();
     fbputs(">", OUT, 0);
 
-    // Display the input buffer with line wrapping
-    int row = 16; // Start from the first row of the input area
-    int col = 1;   // Start after the ">" prompt
+    int row = 16; // Starting row
+    int col = 1;  // Starting column after '>'
 
+    // Draw characters before the cursor
     for (int i = 0; i < keypress_count; i++) {
+        if (i == cursor_position - 1) {
+            fbputchar('|', row, col++); // Draw the cursor at the correct position
+            if (col >= WIDTH) { // Handle line wrapping
+                col = 0;
+                row++;
+                if (row > 22) break;
+            }
+        }
         fbputchar(keypress_buffer[i][0], row, col++);
-        if (col >= WIDTH) { // When reaching the end of the line, wrap to the next row
+        if (col >= WIDTH) { // Handle line wrapping
             col = 0;
             row++;
             if (row > 22) break;
         }
-        // if (row > 22) {
-        //     row = 16;
-        //     col = 1;
-        //     cursor_position = 1;
-        //     fbputs(">", 20, 0);
-        // }   
     }
-    if (row <= 22) {
+
+    // If the cursor is at the end of the input, draw it explicitly
+    if (cursor_position > keypress_count && row <= 22) {
         fbputchar('|', row, col);
     }
-    //fbputchar('|', row, col);
-     int count = keypress_count;
-    
-    // Clear, character count
+
+    // Display character count on the top line
+    int count = keypress_count;
+
+    // Clear previous character count
     for (int col = 50; col < WIDTH; col++) {
         fbputchar(' ', 14, col);
     }
 
-    // character count
+    // Draw the character count
     fbputchar((count / 100) % 10 + '0', 14, 57); 
     fbputchar((count / 10) % 10 + '0', 14, 58);  
     fbputchar((count % 10) + '0', 14, 59);       
@@ -191,6 +194,52 @@ void update_input_display() {
     fbputchar('4', 14, 62);
     fbputchar('1', 14, 63);
 }
+
+
+// void update_input_display() {
+//     // Clear the entire input area (bottom part of the screen)
+
+//     cursor_clear();
+//     fbputs(">", OUT, 0);
+
+//     // Display the input buffer with line wrapping
+//     int row = 16; // Start from the first row of the input area
+//     int col = 1;   // Start after the ">" prompt
+
+//     for (int i = 0; i < keypress_count; i++) {
+//         fbputchar(keypress_buffer[i][0], row, col++);
+//         if (col >= WIDTH) { // When reaching the end of the line, wrap to the next row
+//             col = 0;
+//             row++;
+//             if (row > 22) break;
+//         }
+//         // if (row > 22) {
+//         //     row = 16;
+//         //     col = 1;
+//         //     cursor_position = 1;
+//         //     fbputs(">", 20, 0);
+//         // }   
+//     }
+//     if (row <= 22) {
+//         fbputchar('|', row, col);
+//     }
+//     //fbputchar('|', row, col);
+//      int count = keypress_count;
+    
+//     // Clear, character count
+//     for (int col = 50; col < WIDTH; col++) {
+//         fbputchar(' ', 14, col);
+//     }
+
+//     // character count
+//     fbputchar((count / 100) % 10 + '0', 14, 57); 
+//     fbputchar((count / 10) % 10 + '0', 14, 58);  
+//     fbputchar((count % 10) + '0', 14, 59);       
+//     fbputchar('/', 14, 60); 
+//     fbputchar('4', 14, 61);
+//     fbputchar('4', 14, 62);
+//     fbputchar('1', 14, 63);
+// }
 /*
 void update_input_display() {
     // Clear the input line
