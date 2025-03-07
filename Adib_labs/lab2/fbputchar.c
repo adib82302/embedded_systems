@@ -122,8 +122,8 @@ void fbclear()
 }
 
 void cursor_clear(){
-  for(int y = 15; y<23; y++){
-    for(int x = 0; x < 64; x++){
+  for(int y = 16; y<23; y++){
+    for(int x = 8; x < 64; x++){
       fbputs(" ", y,x);
     }
   }
