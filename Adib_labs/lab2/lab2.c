@@ -16,7 +16,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
-
+//start definitions
 #define REPEAT_DELAY 300000 // Initial delay (300ms) before repeating
 #define REPEAT_RATE 50000   // Repeat rate (50ms) for continued input
 
