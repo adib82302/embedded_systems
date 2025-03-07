@@ -125,7 +125,9 @@ char keycode_to_char(uint8_t modifiers, uint8_t keycode) {
 
     if (modifiers & USB_LCTRL) printf("[CTRL] ");
     if (modifiers & USB_LALT) printf("[ALT] ");
-
+    printf("shift %d \n", shift);
+    printf("keycode %d \n", keycode);
+    printf("out %d \n", keycode_to_ascii_shift[keycode]);
     if (shift) {
         return keycode_to_ascii_shift[keycode];
     } else {
