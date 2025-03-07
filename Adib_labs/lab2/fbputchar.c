@@ -122,7 +122,11 @@ void fbclear()
 }
 
 void cursor_clear(){
-  fbputs(" ", 22,64);
+  for(int y = 15, y<23, y++){
+    for(int x = 0, x = 64, x++){
+      fbputs(" ", y,x);
+  }
+  }
 }
 
 /* 8 X 16 console font from /lib/kbd/consolefonts/lat0-16.psfu.gz
