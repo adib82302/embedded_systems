@@ -162,15 +162,19 @@ void update_input_display() {
         if (col >= WIDTH) { // When reaching the end of the line, wrap to the next row
             col = 0;
             row++;
+            if (row > 23) break;
         }
-        if (row > 22) {
-            row = 16;
-            col = 1;
-            cursor_position = 1;
-            fbputs(">", 20, 0);
-        }   
+        // if (row > 22) {
+        //     row = 16;
+        //     col = 1;
+        //     cursor_position = 1;
+        //     fbputs(">", 20, 0);
+        // }   
     }
-    fbputchar('|', row, col);
+    if (row <= 23) {
+        fbputchar('|', row, col);
+    }
+    //fbputchar('|', row, col);
 }
 /*
 void update_input_display() {
@@ -226,10 +230,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
         keypress_buffer[keypress_count][1] = '\0';
         keypress_count++;
 
-        //if (keypress_count >= BUFFER_SIZE - 1) {
-        //    keypress_count = 0; // Prevent overflow
-        //}
-        
+
         update_input_display();
     }
 }
