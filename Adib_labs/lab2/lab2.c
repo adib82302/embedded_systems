@@ -1,6 +1,6 @@
 /*
  *
- * CSEE 4840 Lab 2 for Spring 2025 
+ * CSEE 4840 Lab 2 by 
  * Name/UNI: Kristian Nikolov (kdn2117)
  * Name/UNI: Adib Khondoker (aak2250)
  */
