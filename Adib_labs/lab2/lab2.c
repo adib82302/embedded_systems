@@ -291,7 +291,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
             send(sockfd, message_to_send, msg_length, 0);
         }
 
-        memset(keypress_buffer, 0, sizeof(keypress_buffer));
+        memset(keypress_buffer, ' ', sizeof(keypress_buffer)); // Clear buffer with spaces
         keypress_count = 0;
         cursor_position = 1;
         cursor_clear();
@@ -307,7 +307,7 @@ void handle_keypress(const char *keystate, char ascii_char) {
                 keypress_buffer[i][0] = keypress_buffer[i + 1][0];
             }
             keypress_count--;
-            keypress_buffer[keypress_count][0] = ' ';
+            keypress_buffer[keypress_count][0] = ' '; // Clear the last character space
             cursor_position--;
             update_input_display();
         }
