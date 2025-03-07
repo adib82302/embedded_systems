@@ -121,12 +121,13 @@ void fbclear()
   }
 }
 
-void cursor_clear(){
-  for(int y = 16; y<23; y++){
-    for(int x = 8; x < 64; x++){
-      fbputs(" ", y,x);
+void cursor_clear() {
+    for (int y = 20; y <= 22; y++) { // Clear rows 20, 21, and 22
+        for (int x = 1; x < 63; x++) { // Clear columns 1 to 62 (leave the ">" at column 0)
+            fbputchar(' ', y, x);
+        }
     }
-  }
+    fbputs(">", 20, 0); // Reset input line with the prompt at the start
 }
 
 /* 8 X 16 console font from /lib/kbd/consolefonts/lat0-16.psfu.gz
