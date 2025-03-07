@@ -1,11 +1,3 @@
-/*
- *
- * CSEE 4840 Lab 2 for 2019
- *
- * Name/UNI: Kristian Nikolov (kdn2117)
- * Name/UNI: Adib Khondoker (aak2250)
- */
-
 #include "fbputchar.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,11 +38,10 @@ void display_message(const char *message);
 void clear_receive_area();
 
 int main() {
-    int err, col;
+    int err;
     struct sockaddr_in serv_addr;
     struct usb_keyboard_packet packet;
     int transferred;
-    char keystate[12];
 
     if ((err = fbopen()) != 0) {
         fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
@@ -98,7 +89,7 @@ int main() {
             char key = packet.keycode[0]; // Take the first keycode
             handle_keypress(key);
 
-            if (packet.keycode[0] == 0x29) { /* ESC pressed? */
+            if (key == 0x29) { /* ESC pressed? */
                 break;
             }
         }
@@ -136,10 +127,15 @@ void setup_screen() {
 
 /* Update the input display with the cursor */
 void update_input_display() {
+    // Clear the input line
     for (int col = 1; col < WIDTH; col++) {
         fbputchar(' ', OUT, col);
     }
 
+    // Ensure the input buffer is null-terminated
+    input_buffer[BUFFER_SIZE - 1] = '\0';
+
+    // Display the input buffer and cursor
     fbputs(input_buffer, OUT, 1);
     fbputchar('|', OUT, cursor_position + 1);
 }
@@ -155,7 +151,8 @@ void handle_keypress(char key) {
             cursor_position--;
             input_buffer[cursor_position] = ' ';
         }
-    } else if (cursor_position < BUFFER_SIZE - 1) {
+    } else if (cursor_position < BUFFER_SIZE - 1 && key >= 0x20 && key <= 0x7E) {
+        // Only accept printable ASCII characters
         input_buffer[cursor_position++] = key;
     }
     update_input_display();
