@@ -1,3 +1,10 @@
+/*
+ *
+ * CSEE 4840 Lab 2 for 2019
+ *
+ * Name/UNI: Kristian Nikolov (kdn2117)
+ * Name/UNI: Adib Khondoker (aak2250)
+ */
 #include "fbputchar.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +14,7 @@
 #include <unistd.h>
 #include "usbkeyboard.h"
 #include <pthread.h>
+#include <time.h>
 
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
@@ -22,6 +30,7 @@
 // Input buffer and cursor management
 char input_buffer[BUFFER_SIZE] = {0};
 int cursor_position = 0;
+int cursor_visible = 1; // Toggle for cursor blinking
 
 int sockfd; /* Socket file descriptor */
 struct libusb_device_handle *keyboard;
@@ -36,12 +45,15 @@ void handle_keypress(char key);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
+void toggle_cursor();
 
 int main() {
     int err;
     struct sockaddr_in serv_addr;
     struct usb_keyboard_packet packet;
     int transferred;
+    char keystate[12];
+    time_t last_toggle = 0;
 
     if ((err = fbopen()) != 0) {
         fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
@@ -86,12 +98,26 @@ int main() {
                                   (unsigned char *)&packet, sizeof(packet),
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
-            char key = packet.keycode[0]; // Take the first keycode
-            handle_keypress(key);
+            // Show keycodes in terminal (like the original code)
+            sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0], packet.keycode[1]);
+            printf("%s\n", keystate);
 
-            if (key == 0x29) { /* ESC pressed? */
+            // Display keycodes on the VGA display
+            fbputs(keystate, OUT, 1);
+
+            // Handle the actual keypress for the input display
+            handle_keypress(packet.keycode[0]);
+
+            if (packet.keycode[0] == 0x29) { /* ESC pressed? */
                 break;
             }
+        }
+
+        // Blink the cursor every 500ms
+        time_t now = time(NULL);
+        if (now - last_toggle >= 0.5) {
+            toggle_cursor();
+            last_toggle = now;
         }
     }
 
@@ -135,9 +161,13 @@ void update_input_display() {
     // Ensure the input buffer is null-terminated
     input_buffer[BUFFER_SIZE - 1] = '\0';
 
-    // Display the input buffer and cursor
+    // Display the input buffer
     fbputs(input_buffer, OUT, 1);
-    fbputchar('|', OUT, cursor_position + 1);
+
+    // Draw the cursor if it is visible
+    if (cursor_visible) {
+        fbputchar('|', OUT, cursor_position + 1);
+    }
 }
 
 /* Handle keypresses and update the input buffer */
@@ -188,4 +218,10 @@ void clear_receive_area() {
             fbputchar(' ', row, col);
         }
     }
+}
+
+/* Toggle cursor visibility for blinking effect */
+void toggle_cursor() {
+    cursor_visible = !cursor_visible;
+    update_input_display();
 }
