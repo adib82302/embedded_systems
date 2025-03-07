@@ -184,20 +184,20 @@ void update_input_display() {
 
     // Draw characters before the cursor
     for (int i = 0; i < keypress_count; i++) {
-        if (i == cursor_position - 1) {
-            fbputchar('|', row, col++); // Draw the cursor at the correct position
-            if (col >= WIDTH) { // Handle line wrapping
-                col = 0;
-                row++;
-                if (row > 22) break;
-            }
-        }
         fbputchar(keypress_buffer[i][0], row, col++);
         if (col >= WIDTH) { // Handle line wrapping
             col = 0;
             row++;
             if (row > 22) break;
         }
+    }
+
+    // Explicitly draw the cursor if it is at the end of the input
+    if (cursor_position > keypress_count && row <= 22) {
+        fbputchar('|', row, col);
+    } else if (row <= 22) {
+        // Otherwise, draw the cursor within the text
+        fbputchar('|', row, col);
     }
 
     // Display character count on the top line
@@ -217,6 +217,7 @@ void update_input_display() {
     fbputchar('4', 14, 62);
     fbputchar('1', 14, 63);
 }
+
 
 
 /* Handle keypresses, store in buffer, and update display */
