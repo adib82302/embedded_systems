@@ -162,7 +162,7 @@ void update_input_display() {
         if (col >= WIDTH) { // When reaching the end of the line, wrap to the next row
             col = 0;
             row++;
-            if (row > 23) break;
+            if (row > 22) break;
         }
         // if (row > 22) {
         //     row = 16;
