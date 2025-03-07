@@ -244,8 +244,22 @@ void handle_keypress(const char *keystate, char ascii_char) {
         keypress_count--;
         keypress_buffer[keypress_count][0] = ' '; // Clear the last character
         update_input_display();
+        }
     }
-}
+
+    else if (keycode == 0x50) { // Left
+        if (cursor_position > 1) { 
+            cursor_position--;
+            update_input_display();
+        }
+    } 
+    else if (keycode == 0x4F) { // Right 
+        if (cursor_position < keypress_count && cursor_position < BUFFER_SIZE - 1) {
+            cursor_position++;
+            update_input_display();
+        }
+    } 
+
     else if (ascii_char != 0 && keypress_count < BUFFER_SIZE - 1) {
         keypress_buffer[keypress_count][0] = ascii_char;
         keypress_buffer[keypress_count][1] = '\0';
