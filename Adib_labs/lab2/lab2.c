@@ -107,14 +107,15 @@ int main() {
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
             // Prepare the keycode string with raw binary output
+            bool print = false;
             if (packet.keycode[0] != prev_keycodes[0]) {
                 curr_keycode = packet.keycode[0];
             }
-            else if (packet.keycode[1] != prev_keycodes[1]) {
+            else {
                 curr_keycode = packet.keycode[1];
             }
-            else {
-                curr_keycode = packet.keycode[0];
+            if (curr_keycode != 0) {
+                print = true;
             }
             prev_keycodes[0] = packet.keycode[0];
             prev_keycodes[1] = packet.keycode[1];
@@ -130,7 +131,9 @@ int main() {
             ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
             
             // Process the keypress and update display
-            handle_keypress(keystate, ascii_char, packet.modifiers);
+            if (print) {
+                handle_keypress(keystate, ascii_char, packet.modifiers);
+            }
 
             if (curr_keycode == 0x29) { /* ESC pressed? */
                 break;
