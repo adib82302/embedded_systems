@@ -43,6 +43,8 @@ int sockfd; /* Socket file descriptor */
 struct libusb_device_handle *keyboard;
 uint8_t endpoint_address;
 
+uint8_t prev_keycodes [2] = {0x00, 0x00};
+
 pthread_t network_thread;
 void *network_thread_f(void *);
 
@@ -104,18 +106,30 @@ int main() {
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
             // Prepare the keycode string with raw binary output
+            uint8_t curr_keycode = 0x00;
+            if (packet.keycode[0] != prev_keycodes[0]) {
+                curr_keycode = packet.keycode[0];
+            }
+            else if (packet.keycode[1] != prev_keycodes[1]) {
+                curr_keycode = packet.keycode[1];
+            }
+            else {
+                curr_keycode = packet.keycode[0];
+            }
+            prev_keycodes[0] = packet.keycode[0];
+            prev_keycodes[1] = packet.keycode[1];
             sprintf(keystate, "modifiers:%02x key:%02x", packet.modifiers, packet.keycode[0]);
             
             // Display in the terminal for debugging
             printf("%s\n", keystate);
 
             // Convert keycode to ASCII
-            char ascii_char = keycode_to_char(packet.modifiers, packet.keycode[0]);
+            char ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
             
             // Process the keypress and update display
             handle_keypress(keystate, ascii_char);
 
-            if (packet.keycode[0] == 0x29) { /* ESC pressed? */
+            if (curr_keycode == 0x29) { /* ESC pressed? */
                 break;
             }
         }
