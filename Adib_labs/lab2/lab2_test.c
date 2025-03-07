@@ -182,26 +182,23 @@ void update_input_display() {
     int row = 16; // Starting row
     int col = 1;  // Starting column after '>'
 
-    // Draw all characters in the buffer
-    for (int i = 0; i < keypress_count; i++) {
-        fbputchar(keypress_buffer[i][0], row, col++);
+    // Draw characters before the cursor
+    for (int i = 0; i < keypress_count + 1; i++) {
+        if (i <= keypress_count) {
+            fbputchar(keypress_buffer[i][0], row, col++);
+        }
+        if (i == cursor_position - 1) {
+            fbputchar('|', row, col++); // Draw the cursor at the correct position
+            if (col >= WIDTH) { // Handle line wrapping
+                col = 0;
+                row++;
+                if (row > 22) break;
+            }
+        }
         if (col >= WIDTH) { // Handle line wrapping
             col = 0;
             row++;
             if (row > 22) break;
-        }
-    }
-
-    // Draw the cursor explicitly
-    if (cursor_position > keypress_count) {
-        // Cursor is at the end of the input
-        fbputchar('|', row, col);
-    } else {
-        // Cursor is within the input
-        int cursor_col = (cursor_position % WIDTH);
-        int cursor_row = row + (cursor_position / WIDTH);
-        if (cursor_row <= 22) {
-            fbputchar('|', cursor_row, cursor_col);
         }
     }
 
@@ -222,7 +219,6 @@ void update_input_display() {
     fbputchar('4', 14, 62);
     fbputchar('1', 14, 63);
 }
-
 
 
 /* Handle keypresses, store in buffer, and update display */
