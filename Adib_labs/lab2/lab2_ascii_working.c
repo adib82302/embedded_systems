@@ -6,7 +6,7 @@
  * Name/UNI: Adib Khondoker (aak2250)
  */
 #include "fbputchar.h"
-#include "keymap.h"
+#include "keymap.h"  // Include keymap for ASCII conversion
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +28,7 @@
 #define WIDTH 63
 
 // Keypress buffer and cursor management
-char keypress_buffer[BUFFER_SIZE][12]; // Stores up to 128 keypresses as strings
+char keypress_buffer[BUFFER_SIZE]; // Stores ASCII characters instead of binary
 int keypress_count = 0;
 int cursor_position = 0;
 
@@ -41,7 +41,7 @@ void *network_thread_f(void *);
 
 // Function prototypes
 void setup_screen();
-void handle_keypress(const char *keystate);
+void handle_keypress(uint8_t modifiers, uint8_t keycode);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
@@ -51,7 +51,6 @@ int main() {
     struct sockaddr_in serv_addr;
     struct usb_keyboard_packet packet;
     int transferred;
-    char keystate[12];
 
     if ((err = fbopen()) != 0) {
         fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
@@ -96,9 +95,11 @@ int main() {
                                   (unsigned char *)&packet, sizeof(packet),
                                   &transferred, 0);
         if (transferred == sizeof(packet)) {
-            sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0], packet.keycode[1]);
-            printf("%s\n", keystate);
-            handle_keypress(keystate);
+            // Display in the terminal for debugging
+            printf("Modifiers: %02x Keycode: %02x\n", packet.modifiers, packet.keycode[0]);
+            
+            // Handle the keypress and update the display with ASCII conversion
+            handle_keypress(packet.modifiers, packet.keycode[0]);
 
             if (packet.keycode[0] == 0x29) { /* ESC pressed? */
                 break;
@@ -139,65 +140,47 @@ void setup_screen() {
 
 /* Update the input display with a static cursor */
 void update_input_display() {
+    // Clear the input line
     for (int col = 1; col < WIDTH; col++) {
         fbputchar(' ', OUT, col);
     }
 
-    int col = 1;
+    // Display all ASCII characters from the buffer
     for (int i = 0; i < keypress_count; i++) {
-        fbputs(keypress_buffer[i], OUT, col);
-        col += strlen(keypress_buffer[i]) + 1;
+        fbputchar(keypress_buffer[i], OUT, i + 1);
     }
 
-    fbputchar('|', OUT, col);
+    // Draw a static cursor as a vertical line '|'
+    fbputchar('|', OUT, keypress_count + 1);
 
-    if (col >= WIDTH - 1) {
+    // Check for overflow and reset if necessary
+    if (keypress_count >= WIDTH - 1) {
         keypress_count = 0;
         cursor_position = 1;
-        fbputs(">", OUT, 0);
+        fbputs(">", OUT, 0); // Reset input line
     }
 }
 
-/* Handle keypresses, store in buffer, and send message on Enter */
-void handle_keypress(const char *keystate) {
-    uint8_t modifiers, keycode;
-    sscanf(keystate, "%02hhx %02hhx", &modifiers, &keycode);
-
+/* Handle keypresses, convert to ASCII, store in buffer, and update display */
+void handle_keypress(uint8_t modifiers, uint8_t keycode) {
     char ascii_char = keycode_to_char(modifiers, keycode);
 
-    if (ascii_char == '\n') { // Enter key
-        char message_to_send[BUFFER_SIZE] = {0};
-        int msg_length = 0;
-
-        for (int i = 0; i < keypress_count; i++) {
-            strncat(message_to_send, keypress_buffer[i], BUFFER_SIZE - msg_length - 1);
-            msg_length = strlen(message_to_send);
+    if (ascii_char) { // Only handle valid ASCII characters
+        if (ascii_char == '\n') { // Handle enter key
+            keypress_buffer[keypress_count] = '\0'; // Null-terminate for sending
+            display_message(keypress_buffer);
+            keypress_count = 0;
+        } else if (ascii_char == '\b') { // Handle backspace
+            if (keypress_count > 0) {
+                keypress_count--;
+                keypress_buffer[keypress_count] = ' ';
+            }
+        } else { // Regular character input
+            if (keypress_count < BUFFER_SIZE - 1) {
+                keypress_buffer[keypress_count++] = ascii_char;
+            }
         }
-
-        if (msg_length > 0) {
-            send(sockfd, message_to_send, msg_length, 0);
-            display_message(message_to_send);
-        }
-
-        memset(keypress_buffer, 0, sizeof(keypress_buffer));
-        keypress_count = 0;
-        cursor_position = 1;
-        fbputs(">", OUT, 0);
-    } 
-    else if (ascii_char == '\b') { // Backspace
-        if (keypress_count > 0) {
-            keypress_count--;
-            keypress_buffer[keypress_count][0] = '\0';
-            update_input_display();
-        }
-    } 
-    else if (ascii_char) { // Regular character
-        if (keypress_count < BUFFER_SIZE - 1) {
-            keypress_buffer[keypress_count][0] = ascii_char;
-            keypress_buffer[keypress_count][1] = '\0';
-            keypress_count++;
-            update_input_display();
-        }
+        update_input_display();
     }
 }
 
