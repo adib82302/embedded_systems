@@ -16,7 +16,7 @@ lab2.tar.gz : $(TARFILES)
 	tar zcf lab2.tar.gz lab2
 	rm -rf lab2
 
-lab2.o : lab2.c fbputchar.h usbkeyboard.h keymap.h
+lab2.o : lab2.c fbputchar.h usbkeyboard.h lookup_table.h
 fbputchar.o : fbputchar.c fbputchar.h
 usbkeyboard.o : usbkeyboard.c usbkeyboard.h
 
