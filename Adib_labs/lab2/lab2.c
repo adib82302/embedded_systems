@@ -33,30 +33,36 @@
 #define OUT 16
 #define IN 8
 #define WIDTH 63
+
+// variables for handling multiple key inputs
 uint8_t held_keycode = 0;
 char held_ascii = 0;
 struct timespec last_repeat_time;
-// Keypress buffer and cursor management
+uint8_t prev_keycodes [2] = {0x00, 0x00};
+char ascii_char = 0;
+
+// buffer for key input
 char keypress_buffer[BUFFER_SIZE][12]; // Stores up to 128 keypresses as binary strings
 int keypress_count = 0;
 int cursor_position = 0;
 
-int sockfd; /* Socket file descriptor */
+/* Socket file descriptor */
+int sockfd; 
 struct libusb_device_handle *keyboard;
 uint8_t endpoint_address;
 
-uint8_t prev_keycodes [2] = {0x00, 0x00};
-char ascii_char = 0;
-
+//network variables
 pthread_t network_thread;
 void *network_thread_f(void *);
 
+// function calls for compiler
 void setup_screen();
 void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
 void update_input_display();
 void display_message(const char *message);
 void clear_receive_area();
 
+//network function
 void *network_thread_f(void *ignored) {
     char recvBuf[BUFFER_SIZE];
     int n;
@@ -139,8 +145,7 @@ void update_input_display() {
 
 
 
-/* Handle keypresses, store in buffer, and update display */
-
+/* Handle input, store in buffer, update display */
 void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers) {
     uint8_t keycode = (uint8_t)strtol(keystate + 14, NULL, 16);
     uint8_t extra_keycode = (uint8_t)strtol(keystate + 22, NULL, 16);
@@ -211,15 +216,15 @@ void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers) {
         cursor_position++;
         update_input_display();
 
-        // Only enable repeat if 'r' is pressed
-        if (ascii_char == 'r') {
-            held_keycode = keycode;
-            held_ascii = ascii_char;
-            clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
-        } else {
-            held_keycode = 0;
-            held_ascii = 0;
-        }
+        // // Only enable repeat if 'r' is pressed
+        // if (ascii_char == 'r') {
+        //     held_keycode = keycode;
+        //     held_ascii = ascii_char;
+        //     clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+        // } else {
+        //     held_keycode = 0;
+        //     held_ascii = 0;
+        // }
     }
 
     // Handle key release
@@ -228,27 +233,27 @@ void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers) {
         held_ascii = 0;
     }
 
-    // Auto-repeat only for the 'r' key
-    if (held_keycode != 0 && held_ascii == 'r') {
-        struct timespec current_time;
-        clock_gettime(CLOCK_MONOTONIC, &current_time);
-        long elapsed_ms = (current_time.tv_sec - last_repeat_time.tv_sec) * 1000 +
-                          (current_time.tv_nsec - last_repeat_time.tv_nsec) / 1000000;
+    // // Auto-repeat only for the 'r' key
+    // if (held_keycode != 0 && held_ascii == 'r') {
+    //     struct timespec current_time;
+    //     clock_gettime(CLOCK_MONOTONIC, &current_time);
+    //     long elapsed_ms = (current_time.tv_sec - last_repeat_time.tv_sec) * 1000 +
+    //                       (current_time.tv_nsec - last_repeat_time.tv_nsec) / 1000000;
 
-        if (elapsed_ms > REPEAT_RATE) {
-            if (keypress_count < BUFFER_SIZE - 1) {
-                // Insert 'r' repeatedly while key is held
-                for (int i = keypress_count; i > cursor_position - 1; i--) {
-                    keypress_buffer[i][0] = keypress_buffer[i - 1][0];
-                }
-                keypress_buffer[cursor_position - 1][0] = 'r';
-                keypress_count++;
-                cursor_position++;
-                update_input_display();
-                clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
-            }
-        }
-    }
+    //     if (elapsed_ms > REPEAT_RATE) {
+    //         if (keypress_count < BUFFER_SIZE - 1) {
+    //             // Insert 'r' repeatedly while key is held
+    //             for (int i = keypress_count; i > cursor_position - 1; i--) {
+    //                 keypress_buffer[i][0] = keypress_buffer[i - 1][0];
+    //             }
+    //             keypress_buffer[cursor_position - 1][0] = 'r';
+    //             keypress_count++;
+    //             cursor_position++;
+    //             update_input_display();
+    //             clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
+    //         }
+    //     }
+    // }
 }
 
 /* Display a message in the top section of the screen */
