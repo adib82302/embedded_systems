@@ -51,110 +51,11 @@ char ascii_char = 0;
 pthread_t network_thread;
 void *network_thread_f(void *);
 
-void setup_screen();
-void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
-void update_input_display();
-void display_message(const char *message);
-void clear_receive_area();
-
-int main() {
-    int err;
-    struct sockaddr_in serv_addr;
-    struct usb_keyboard_packet packet;
-    int transferred;
-    char keystate[12];
-
-    if ((err = fbopen()) != 0) {
-        fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
-        exit(1);
-    }
-
-    setup_screen();
-
-    /* Open the keyboard */
-    if ((keyboard = openkeyboard(&endpoint_address)) == NULL) {
-        fprintf(stderr, "Did not find a keyboard\n");
-        exit(1);
-    }
-
-    /* Create a TCP communications socket */
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        fprintf(stderr, "Error: Could not create socket\n");
-        exit(1);
-    }
-
-    /* Get the server address */
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(SERVER_PORT);
-    if (inet_pton(AF_INET, SERVER_HOST, &serv_addr.sin_addr) <= 0) {
-        fprintf(stderr, "Error: Could not convert host IP \"%s\"\n", SERVER_HOST);
-        exit(1);
-    }
-
-    /* Connect the socket to the server */
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        fprintf(stderr, "Error: connect() failed. Is the server running?\n");
-        exit(1);
-    }
-
-    /* Start the network thread */
-    pthread_create(&network_thread, NULL, network_thread_f, NULL);
-
-    uint8_t curr_keycode = 0x00;
-    /* Look for and handle keypresses */
-    for (;;) {
-        libusb_interrupt_transfer(keyboard, endpoint_address,
-                                  (unsigned char *)&packet, sizeof(packet),
-                                  &transferred, 0);
-        if (transferred == sizeof(packet)) {
-            // Prepare the keycode string with raw binary output
-            int print = 0;
-            if (packet.keycode[0] != prev_keycodes[0]) {
-                curr_keycode = packet.keycode[0];
-            }
-            else if (packet.keycode[1] != prev_keycodes[1]) {
-                curr_keycode = packet.keycode[1];
-            }
-            else {
-                curr_keycode = 0;
-            }
-            if (prev_keycodes[0] != 0 && prev_keycodes[1] != 0 && (packet.keycode[0] == 0 || packet.keycode[1] == 0)) {
-                curr_keycode = 0;
-            }
-            if (curr_keycode != 0) {
-                print = 1;
-            }
-            prev_keycodes[0] = packet.keycode[0];
-            prev_keycodes[1] = packet.keycode[1];
-            sprintf(keystate, "MOD:%02x | KEYCODE:%02x | EXTRA:%02x", packet.modifiers, curr_keycode);
-
-            
-            // Display in the terminal for debugging
-            printf("%s\n", keystate);
-            printf("%d\n", packet.keycode[0]);
-            printf("%d\n", packet.keycode[1]);
-
-            // Convert keycode to ASCII
-            ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
-            
-            // Process the keypress and update display
-            if (print) {
-                handle_keypress(keystate, ascii_char, packet.modifiers);
-            }
-
-            if (curr_keycode == 0x29) { /* ESC pressed? */
-                break;
-            }
-        }
-    }
-
-    /* Terminate the network thread */
-    pthread_cancel(network_thread);
-    pthread_join(network_thread, NULL);
-
-    return 0;
-}
+// void setup_screen();
+// void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
+// void update_input_display();
+// void display_message(const char *message);
+// void clear_receive_area();
 
 void *network_thread_f(void *ignored) {
     char recvBuf[BUFFER_SIZE];
@@ -381,3 +282,105 @@ void clear_receive_area() {
         }
     }
 }
+
+
+
+int main() {
+    int err;
+    struct sockaddr_in serv_addr;
+    struct usb_keyboard_packet packet;
+    int transferred;
+    char keystate[12];
+
+    if ((err = fbopen()) != 0) {
+        fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
+        exit(1);
+    }
+
+    setup_screen();
+
+    /* Open the keyboard */
+    if ((keyboard = openkeyboard(&endpoint_address)) == NULL) {
+        fprintf(stderr, "Did not find a keyboard\n");
+        exit(1);
+    }
+
+    /* Create a TCP communications socket */
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        fprintf(stderr, "Error: Could not create socket\n");
+        exit(1);
+    }
+
+    /* Get the server address */
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_HOST, &serv_addr.sin_addr) <= 0) {
+        fprintf(stderr, "Error: Could not convert host IP \"%s\"\n", SERVER_HOST);
+        exit(1);
+    }
+
+    /* Connect the socket to the server */
+    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        fprintf(stderr, "Error: connect() failed. Is the server running?\n");
+        exit(1);
+    }
+
+    /* Start the network thread */
+    pthread_create(&network_thread, NULL, network_thread_f, NULL);
+
+    uint8_t curr_keycode = 0x00;
+    /* Look for and handle keypresses */
+    for (;;) {
+        libusb_interrupt_transfer(keyboard, endpoint_address,
+                                  (unsigned char *)&packet, sizeof(packet),
+                                  &transferred, 0);
+        if (transferred == sizeof(packet)) {
+            // Prepare the keycode string with raw binary output
+            int print = 0;
+            if (packet.keycode[0] != prev_keycodes[0]) {
+                curr_keycode = packet.keycode[0];
+            }
+            else if (packet.keycode[1] != prev_keycodes[1]) {
+                curr_keycode = packet.keycode[1];
+            }
+            else {
+                curr_keycode = 0;
+            }
+            if (prev_keycodes[0] != 0 && prev_keycodes[1] != 0 && (packet.keycode[0] == 0 || packet.keycode[1] == 0)) {
+                curr_keycode = 0;
+            }
+            if (curr_keycode != 0) {
+                print = 1;
+            }
+            prev_keycodes[0] = packet.keycode[0];
+            prev_keycodes[1] = packet.keycode[1];
+            sprintf(keystate, "MOD:%02x | KEYCODE:%02x | EXTRA:%02x", packet.modifiers, curr_keycode);
+
+            
+            // Display in the terminal for debugging
+            printf("%s\n", keystate);
+            printf("%d\n", packet.keycode[0]);
+            printf("%d\n", packet.keycode[1]);
+
+            // Convert keycode to ASCII
+            ascii_char = keycode_to_char(packet.modifiers, curr_keycode);
+            
+            // Process the keypress and update display
+            if (print) {
+                handle_keypress(keystate, ascii_char, packet.modifiers);
+            }
+
+            if (curr_keycode == 0x29) { /* ESC pressed? */
+                break;
+            }
+        }
+    }
+
+    /* Terminate the network thread */
+    pthread_cancel(network_thread);
+    pthread_join(network_thread, NULL);
+
+    return 0;
+}
+
