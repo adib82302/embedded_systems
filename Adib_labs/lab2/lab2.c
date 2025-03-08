@@ -11,13 +11,13 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include "usbkeyboard.h"
-#include "keymap.h"
+#include "lookup_table.h"
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
 
 #define LEFT_ARROW 0x50  // Example keycode for Left Arrow
-#define RIGHT_ARROW 0x4F  // Example keycode for Right Arrow
+#define RIGHT_ARROW 0x4F  // Example keycode for Right Arrowf
 
 
 #define REPEAT_DELAY 300000 // Initial delay (300ms) before repeating
@@ -51,12 +51,11 @@ char ascii_char = 0;
 pthread_t network_thread;
 void *network_thread_f(void *);
 
-// Function prototypes
-void setup_screen();
-void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
-void update_input_display();
-void display_message(const char *message);
-void clear_receive_area();
+//void setup_screen();
+//void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
+//void update_input_display();
+//void display_message(const char *message);
+//void clear_receive_area();
 
 int main() {
     int err;
