@@ -51,11 +51,11 @@ char ascii_char = 0;
 pthread_t network_thread;
 void *network_thread_f(void *);
 
-//void setup_screen();
-//void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
-//void update_input_display();
-//void display_message(const char *message);
-//void clear_receive_area();
+void setup_screen();
+void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers);
+void update_input_display();
+void display_message(const char *message);
+void clear_receive_area();
 
 int main() {
     int err;
