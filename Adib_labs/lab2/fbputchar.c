@@ -121,6 +121,7 @@ void fbclear()
   }
 }
 
+//resets cursor
 void cursor_clear() {
     for (int row = 16; row <= 22; row++) { 
         for (int column = 0; column < 63; column++) { 

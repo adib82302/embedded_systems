@@ -1,9 +1,11 @@
 /*
  *
- * CSEE 4840 Lab 2 by 
+ * CSEE 4840 Lab 2 
  * Name/UNI: Kristian Nikolov (kdn2117)
  * Name/UNI: Adib Khondoker (aak2250)
  */
+
+//libraries
 #include "fbputchar.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,16 +18,19 @@
 #include <time.h>
 #include <unistd.h>
 
+//left and right arrow keycodes
 #define LEFT_ARROW 0x50  // Example keycode for Left Arrow
 #define RIGHT_ARROW 0x4F  // Example keycode for Right Arrowf
 
-
+//repeat delay
 #define REPEAT_DELAY 300000 // Initial delay (300ms) before repeating
 #define REPEAT_RATE 50000   // Repeat rate (50ms) for continued input
 
+//network definition
 #define SERVER_HOST "128.59.19.114"
 #define SERVER_PORT 42000
 
+//buffer definitions
 #define BUFFER_SIZE 441
 #define TOP 0
 #define BOTTOM 23
@@ -215,16 +220,6 @@ void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers) {
         keypress_count++;
         cursor_position++;
         update_input_display();
-
-        // // Only enable repeat if 'r' is pressed
-        // if (ascii_char == 'r') {
-        //     held_keycode = keycode;
-        //     held_ascii = ascii_char;
-        //     clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
-        // } else {
-        //     held_keycode = 0;
-        //     held_ascii = 0;
-        // }
     }
 
     // Handle key release
@@ -233,27 +228,6 @@ void handle_keypress(const char *keystate, char ascii_char, uint8_t modifiers) {
         held_ascii = 0;
     }
 
-    // // Auto-repeat only for the 'r' key
-    // if (held_keycode != 0 && held_ascii == 'r') {
-    //     struct timespec current_time;
-    //     clock_gettime(CLOCK_MONOTONIC, &current_time);
-    //     long elapsed_ms = (current_time.tv_sec - last_repeat_time.tv_sec) * 1000 +
-    //                       (current_time.tv_nsec - last_repeat_time.tv_nsec) / 1000000;
-
-    //     if (elapsed_ms > REPEAT_RATE) {
-    //         if (keypress_count < BUFFER_SIZE - 1) {
-    //             // Insert 'r' repeatedly while key is held
-    //             for (int i = keypress_count; i > cursor_position - 1; i--) {
-    //                 keypress_buffer[i][0] = keypress_buffer[i - 1][0];
-    //             }
-    //             keypress_buffer[cursor_position - 1][0] = 'r';
-    //             keypress_count++;
-    //             cursor_position++;
-    //             update_input_display();
-    //             clock_gettime(CLOCK_MONOTONIC, &last_repeat_time);
-    //         }
-    //     }
-    // }
 }
 
 /* Display a message in the top section of the screen */
