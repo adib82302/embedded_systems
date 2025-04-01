@@ -1,0 +1,50 @@
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /home/user/Documents/Columbia/EmbeddedSystems/embedded_systems/kris_labs/lab3/lab3-hw/soc_system.qsys --synthesis=VERILOG --output-directory=/home/user/Documents/Columbia/EmbeddedSystems/embedded_systems/kris_labs/lab3/lab3-hw/soc_system/synthesis --family="Cyclone V" --part=5CSEMA5F31C6
+Progress: Loading lab3-hw/soc_system.qsys
+Progress: Reading input file
+Progress: Adding clk_0 [clock_source 21.1]
+Progress: Parameterizing module clk_0
+Progress: Adding hps_0 [altera_hps 21.1]
+Progress: Parameterizing module hps_0
+Progress: Adding vga_ball_0 [vga_ball 1.0]
+Progress: Parameterizing module vga_ball_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: soc_system.hps_0: HPS Main PLL counter settings: n = 0  m = 73
+Info: soc_system.hps_0: HPS peripherial PLL counter settings: n = 0  m = 39
+Info: soc_system: Generating soc_system "soc_system" for QUARTUS_SYNTH
+Info: Interconnect is inserted between master hps_0.h2f_lw_axi_master and slave vga_ball_0.avalon_slave_0 because the master is of type axi and the slave is of type avalon.
+Info: hps_0: "Running  for module: hps_0"
+Info: hps_0: HPS Main PLL counter settings: n = 0  m = 73
+Info: hps_0: HPS peripherial PLL counter settings: n = 0  m = 39
+Info: hps_0: "soc_system" instantiated altera_hps "hps_0"
+Info: vga_ball_0: "soc_system" instantiated vga_ball "vga_ball_0"
+Info: avalon_st_adapter: Inserting error_adapter: error_adapter_0
+Info: mm_interconnect_0: "soc_system" instantiated altera_mm_interconnect "mm_interconnect_0"
+Info: rst_controller: "soc_system" instantiated altera_reset_controller "rst_controller"
+Info: fpga_interfaces: "hps_0" instantiated altera_interface_generator "fpga_interfaces"
+Info: hps_io: "hps_0" instantiated altera_hps_io "hps_io"
+Info: vga_ball_0_avalon_slave_0_translator: "mm_interconnect_0" instantiated altera_merlin_slave_translator "vga_ball_0_avalon_slave_0_translator"
+Info: hps_0_h2f_lw_axi_master_agent: "mm_interconnect_0" instantiated altera_merlin_axi_master_ni "hps_0_h2f_lw_axi_master_agent"
+Info: vga_ball_0_avalon_slave_0_agent: "mm_interconnect_0" instantiated altera_merlin_slave_agent "vga_ball_0_avalon_slave_0_agent"
+Info: vga_ball_0_avalon_slave_0_agent_rsp_fifo: "mm_interconnect_0" instantiated altera_avalon_sc_fifo "vga_ball_0_avalon_slave_0_agent_rsp_fifo"
+Info: router: "mm_interconnect_0" instantiated altera_merlin_router "router"
+Info: router_002: "mm_interconnect_0" instantiated altera_merlin_router "router_002"
+Info: vga_ball_0_avalon_slave_0_burst_adapter: "mm_interconnect_0" instantiated altera_merlin_burst_adapter "vga_ball_0_avalon_slave_0_burst_adapter"
+Info: Reusing file /home/user/Documents/Columbia/EmbeddedSystems/embedded_systems/kris_labs/lab3/lab3-hw/soc_system/synthesis/submodules/altera_merlin_address_alignment.sv
+Info: cmd_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: rsp_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "rsp_demux"
+Info: rsp_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file /home/user/Documents/Columbia/EmbeddedSystems/embedded_systems/kris_labs/lab3/lab3-hw/soc_system/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: vga_ball_0_avalon_slave_0_rsp_width_adapter: "mm_interconnect_0" instantiated altera_merlin_width_adapter "vga_ball_0_avalon_slave_0_rsp_width_adapter"
+Info: Reusing file /home/user/Documents/Columbia/EmbeddedSystems/embedded_systems/kris_labs/lab3/lab3-hw/soc_system/synthesis/submodules/altera_merlin_address_alignment.sv
+Info: Reusing file /home/user/Documents/Columbia/EmbeddedSystems/embedded_systems/kris_labs/lab3/lab3-hw/soc_system/synthesis/submodules/altera_merlin_burst_uncompressor.sv
+Info: avalon_st_adapter: "mm_interconnect_0" instantiated altera_avalon_st_adapter "avalon_st_adapter"
+Info: border: "hps_io" instantiated altera_interface_generator "border"
+Info: error_adapter_0: "avalon_st_adapter" instantiated error_adapter "error_adapter_0"
+Info: soc_system: Done "soc_system" with 22 modules, 79 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

@@ -52,12 +52,20 @@ TARFILE = lab3-hw.tar.gz
 # project
 #
 # Run the topmost tcl script to generate the initial project files
+#
+# This also adds the pin constraints for the sdram subsystem, which
+# Platform Designer places in in the HPS_PIN_TCL file.
+#
+# However, to run that, quartus_map has to run once to prepare the netlist
+# enough so that the HPS_PIN_TCL script can run
 
 .PHONY : project
 project : $(QPF) $(QSF) $(SDC)
 
-$(QPF) $(QSF) $(SDC) : $(TCL)
+$(QPF) $(QSF) $(SDC) : $(TCL) $(HPS_PIN_TCL)
 	quartus_sh -t $(TCL)
+	quartus_map $(SYSTEM)
+	quartus_sta -t $(HPS_PIN_TCL) $(SYSTEM)
 
 # qsys
 #
@@ -74,17 +82,16 @@ $(SOPCINFO) $(QIP) $(HPS_PIN_TCL) $(SYSTEM)/ $(PRELOADER_SETTINGS_DIR) : $(QSYS)
 # quartus
 #
 # Run Quartus on the Qsys-generated files
+#
+# Note that for this to succeed, quartus_map has to be run once
+# on the project so that quartus_sta can be run on the HPS_PIN_TCL
+# script to set up the proper constraints for all the SDRAM pins
 
 .PHONY : quartus
 quartus : $(SOF)
 
 $(SOF) $(HPS_PIN_MAP) : $(QIP) $(QPF) $(QSF) $(HPS_PIN_TCL)
 	quartus_sh --flow compile $(QPF)
-
-#	quartus_map $(SYSTEM)
-#	quartus_sta -t $(HPS_PIN_TCL) $(SYSTEM)
-#	quartus_fit $(SYSTEM)
-#	quartus_asm $(SYSTEM)
 
 # rbf
 #
@@ -109,7 +116,7 @@ $(DTB) : $(DTS)
 
 $(DTS) : $(SOPCINFO) $(BOARD_INFO)
 	@which sopc2dts || (echo "sopc2dts not found.  Did you run embedded_command_shell.sh?"; exit 1)
-	sopc2dts --input $(SOPCINFO) \
+	java -jar /home/user/sopc2dts/sopc2dts.jar --input $(SOPCINFO) \
 		--output $(DTS) \
 		--type dts \
 		--board $(BOARD_INFO) \
