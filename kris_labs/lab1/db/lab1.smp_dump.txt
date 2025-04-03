@@ -1,0 +1,7 @@
+
+State Machine - |lab1|state
+Name state.UPDATE_N state.DONE state.RUNNING state.IDLE 
+state.IDLE 0 0 0 0 
+state.RUNNING 0 0 1 1 
+state.DONE 0 1 0 1 
+state.UPDATE_N 1 0 0 1 

@@ -15,7 +15,7 @@
  *        1             | Green |  Green component
  *        2             | Blue  |  Blue component
  *        3     |     x-pos     |  x position of the ball (0-255)   
- *        4     |     y-pos     |  y position of the ball (0-255)   
+ *        5     |     y-pos     |  y position of the ball (0-255)   
  */
 
 module vga_ball #(parameter int BALL_WIDTH = 5)
@@ -31,13 +31,23 @@ module vga_ball #(parameter int BALL_WIDTH = 5)
 		                                VGA_BLANK_n,
 		          output logic 	        VGA_SYNC_n);
 
-    logic [10:0]	    hcount;
-    logic [9:0]      vcount;
+    logic [10:0]	hcount;
+    logic [9:0]     vcount;
 
-    logic [7:0] 	    background_r, background_g, background_b;
-    logic [15:0]     pos_x, pos_y;
+    logic [7:0]     background_r, background_g, background_b;
+    logic [15:0]    pos_x, pos_y;
+
+    logic           is_in_ball;
 	
     vga_counters counters(.clk50(clk), .*);
+
+    in_ball ib1(
+        .pos_x(pos_x),
+        .pos_y(pos_y),
+        .hcount(hcount),
+        .vcount(vcount),
+        .is_in_ball(is_in_ball)
+    );
 
     always_ff @(posedge clk) begin
         if (reset) begin
@@ -59,13 +69,34 @@ module vga_ball #(parameter int BALL_WIDTH = 5)
     always_comb begin
         {VGA_R, VGA_G, VGA_B} = {8'h0, 8'h0, 8'h0};
         if (VGA_BLANK_n)
-	        if (hcount[10:6] == 5'd3 && vcount[9:5] == 5'd3)
+	        if (is_in_ball)
                 {VGA_R, VGA_G, VGA_B} = {8'hff, 8'hff, 8'hff};
 	        else
 	            {VGA_R, VGA_G, VGA_B} = {background_r, background_g, background_b};
     end
 	       
 endmodule
+
+
+module in_ball(
+    input logic [15:0]  pos_x, pos_y,
+    input logic [10:0]  hcount,
+    input logic [9:0]   vcount,
+    output logic is_in_ball);
+/*
+ * Actually determines if a pixel is part of the ball
+ */
+    logic [15:0] radius =  16'd20;
+    always_comb begin
+	    if (((hcount+radius) > pos_x ) && (hcount < (pos_x + radius))
+            && ((vcount + radius) > pos_y) && (vcount < (pos_y + radius)))
+            is_in_ball = 1;
+        else
+            is_in_ball = 0;
+    end
+
+endmodule
+
 
 module vga_counters(
  input logic 	     clk50, reset,

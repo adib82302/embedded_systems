@@ -115,7 +115,7 @@ $(DTB) : $(DTS)
 	dtc -I dts -O dtb -o $(DTB) $(DTS)
 
 $(DTS) : $(SOPCINFO) $(BOARD_INFO)
-	@which sopc2dts || (echo "sopc2dts not found.  Did you run embedded_command_shell.sh?"; exit 1)
+	# @which sopc2dts || (echo "sopc2dts not found.  Did you run embedded_command_shell.sh?"; exit 1)
 	java -jar /home/user/sopc2dts/sopc2dts.jar --input $(SOPCINFO) \
 		--output $(DTS) \
 		--type dts \
@@ -249,3 +249,9 @@ kernel-clean :
 
 config-clean :
 	rm -rf $(KERNEL_CONFIG)
+
+my-script: qsys-clean qsys quartus rbf dtb
+	sudo mount /dev/mmcblk0p1 /mnt/sdcard/
+	scp output_files/soc_system.rbf /mnt/sdcard/
+	scp soc_system.dtb  /mnt/sdcard/
+	sudo umount  /mnt/sdcard
