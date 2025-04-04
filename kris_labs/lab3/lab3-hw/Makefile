@@ -255,3 +255,6 @@ my-script: qsys-clean qsys quartus rbf dtb
 	scp output_files/soc_system.rbf /mnt/sdcard/
 	scp soc_system.dtb  /mnt/sdcard/
 	sudo umount  /mnt/sdcard
+
+lint-ball:
+	verilator --lint-only -Wall vga_ball.sv

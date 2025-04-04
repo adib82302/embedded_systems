@@ -12,10 +12,10 @@
  * 
  * Byte Offset 15  ...  7  ...  0   Meaning
  *        0             |  Red  |  Red component of background color (0-255)
- *        1             | Green |  Green component
- *        2             | Blue  |  Blue component
- *        3     |     x-pos     |  x position of the ball (0-255)   
- *        5     |     y-pos     |  y position of the ball (0-255)   
+ *        2             | Green |  Green component
+ *        4             | Blue  |  Blue component
+ *        6     |     x-pos     |  x position of the ball (0-255)   
+ *        8     |     y-pos     |  y position of the ball (0-255)   
  */
 
 module vga_ball #(parameter int BALL_WIDTH = 5)
@@ -36,14 +36,15 @@ module vga_ball #(parameter int BALL_WIDTH = 5)
 
     logic [7:0]     background_r, background_g, background_b;
     logic [15:0]    pos_x, pos_y;
+    logic [15:0]    pos_x_fixed, pos_y_fixed;
 
     logic           is_in_ball;
 	
     vga_counters counters(.clk50(clk), .*);
 
     in_ball ib1(
-        .pos_x(pos_x),
-        .pos_y(pos_y),
+        .pos_x(pos_x_fixed),
+        .pos_y(pos_y_fixed),
         .hcount(hcount),
         .vcount(vcount),
         .is_in_ball(is_in_ball)
@@ -54,6 +55,8 @@ module vga_ball #(parameter int BALL_WIDTH = 5)
 	        background_r <= 8'h0;
 	        background_g <= 8'h0;
 	        background_b <= 8'h80;
+            pos_x <= 16'h0;
+            pos_y <= 16'h0;
         end
         else if (chipselect && write) begin
             case (address)
@@ -63,6 +66,10 @@ module vga_ball #(parameter int BALL_WIDTH = 5)
 	            3'h3 : pos_x <= writedata;
 	            3'h4 : pos_y <= writedata;
             endcase
+        end
+        if (hcount == 11'h0 && vcount == 10'h0) begin
+            pos_x_fixed <= pos_x;
+            pos_y_fixed <= pos_y;
         end
     end
 
@@ -88,8 +95,7 @@ module in_ball(
  */
     logic [15:0] radius =  16'd20;
     always_comb begin
-	    if (((hcount+radius) > pos_x ) && (hcount < (pos_x + radius))
-            && ((vcount + radius) > pos_y) && (vcount < (pos_y + radius)))
+	    if ((((hcount/2) - pos_x)**2 + (vcount - pos_y)**2) < radius**2)
             is_in_ball = 1;
         else
             is_in_ball = 0;
